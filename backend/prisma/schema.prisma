@@ -39,6 +39,8 @@ model LoteEnvio {
   usuario      Usuario  @relation(fields: [usuarioId], references: [id])
   criadoEm     DateTime @default(now()) @map("criado_em")
   status       LoteStatus @default(processando)
+  erro         String?
+  totalEnvios  Int?     @map("total_envios")
   envios       Envio[]
 
   @@map("lotes_envio")

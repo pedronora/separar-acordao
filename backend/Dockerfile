@@ -23,4 +23,4 @@ COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/package.json ./package.json
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node scripts/seed-if-empty.cjs && node .output/server/index.mjs"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node scripts/recover-lotes.cjs && node scripts/seed-if-empty.cjs && node .output/server/index.mjs"]

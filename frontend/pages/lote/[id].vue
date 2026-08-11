@@ -13,6 +13,17 @@ const erroMsg = ref('');
 const sucessoMsg = ref('');
 const envioVisualizado = ref<EnvioDetalhe | null>(null);
 
+const progresso = computed(() => {
+  if (!lote.value) {
+    return { enviados: 0, total: 0, restantes: 0 };
+  }
+  const enviados = lote.value.envios.filter(
+    (e) => e.status === 'enviado'
+  ).length;
+  const total = lote.value.totalEnvios ?? lote.value.envios.length;
+  return { enviados, total, restantes: total - enviados };
+});
+
 async function carregar() {
   erroMsg.value = '';
   try {
@@ -21,6 +32,35 @@ async function carregar() {
     erroMsg.value = mensagemDeErro(erro);
   }
 }
+
+let intervalo: ReturnType<typeof setInterval> | null = null;
+
+function iniciarAcompanhamento() {
+  if (intervalo) {
+    clearInterval(intervalo);
+  }
+  intervalo = setInterval(() => {
+    carregar();
+  }, 4000);
+}
+
+function pararAcompanhamento() {
+  if (intervalo) {
+    clearInterval(intervalo);
+    intervalo = null;
+  }
+}
+
+watch(
+  () => lote.value?.status,
+  (status) => {
+    if (status && status !== 'processando') {
+      pararAcompanhamento();
+    }
+  }
+);
+
+onUnmounted(pararAcompanhamento);
 
 function alternarSelecao(id: string) {
   const indice = selecionados.value.indexOf(id);
@@ -49,7 +89,13 @@ async function reenviar(envioIds?: string[]) {
     });
     sucessoMsg.value = `Reenvio concluído: ${resultado.enviados}/${resultado.total} e-mails.`;
     selecionados.value = [];
-    await carregar();
+await carregar();
+
+onMounted(() => {
+  if (lote.value?.status === 'processando') {
+    iniciarAcompanhamento();
+  }
+});
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
   } finally {
@@ -121,6 +167,10 @@ await carregar();
           </div>
         </dl>
 
+        <p v-if="lote.erro" class="erro">
+          Motivo da falha: {{ lote.erro }}
+        </p>
+
         <button
           class="btn btn-secundario"
           :disabled="reenviando"
@@ -132,6 +182,19 @@ await carregar();
 
       <section class="card">
         <h2>Envios</h2>
+        <p
+          v-if="lote.status === 'processando'"
+          class="sucesso"
+          style="margin-bottom: 0.75rem"
+        >
+          <template v-if="lote.totalEnvios">
+            {{ progresso.enviados }} de {{ progresso.total }} e-mails
+            enviados (restam {{ progresso.restantes }}).
+          </template>
+          <template v-else>
+            Separando as tarefas por pauta...
+          </template>
+        </p>
         <table class="tabela">
           <thead>
             <tr>

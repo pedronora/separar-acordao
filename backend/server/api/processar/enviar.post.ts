@@ -16,53 +16,52 @@ interface CorpoEnvio {
   totalAcordaos?: number;
 }
 
-export default defineEventHandler(async (event) => {
-  const usuario = getUsuarioAutenticado(event);
-  const corpo = (await readBody(event)) as CorpoEnvio;
+interface ParametrosProcessamento {
+  loteId: string;
+  token: string;
+  arquivo: Buffer;
+  arquivoOrigem: string;
+  pautas: Record<string, string>;
+  orgao: string;
+  dataSessao: string;
+  totalAcordaos?: number;
+}
 
-  if (!corpo.token || !corpo.pautas || !corpo.orgao || !corpo.dataSessao) {
-    throw createError({
-      statusCode: 422,
-      message: 'token, pautas, orgao e dataSessao são obrigatórios.',
-    });
+function mensagemDeErroDoProcessamento(erro: unknown): string {
+  if (erro instanceof ErroPythonService) {
+    const detalhe = erro.detalhe;
+    if (
+      typeof detalhe === 'object' &&
+      detalhe.tipo === 'responsaveis_faltantes'
+    ) {
+      return `Responsável(is) não cadastrado(s): ${detalhe.faltantes?.join(', ')}. Cadastre antes de processar.`;
+    }
   }
-
-  const diretorio = resolve(process.cwd(), config.uploadDir);
-  const caminho = join(diretorio, `${corpo.token}.csv`);
-  let arquivo: Buffer;
-  try {
-    arquivo = await readFile(caminho);
-  } catch {
-    throw createError({
-      statusCode: 404,
-      message: 'Arquivo não encontrado ou expirado. Reenvie o upload.',
-    });
+  if (erro instanceof Error && erro.message) {
+    return erro.message;
   }
+  return 'Erro inesperado ao processar o lote.';
+}
 
-  const responsaveisCadastrados = await prisma.responsavel.findMany({
-    select: { id: true, nome: true, email: true, ativo: true },
-  });
-  const mapaPorNome = new Map(
-    responsaveisCadastrados.map((r) => [r.nome.trim().toUpperCase(), r])
+async function processarLote(params: ParametrosProcessamento): Promise<void> {
+  const caminho = join(
+    resolve(process.cwd(), config.uploadDir),
+    `${params.token}.csv`
   );
-
-  const lote = await prisma.loteEnvio.create({
-    data: {
-      arquivoOrigem: corpo.arquivoOrigem || corpo.token,
-      orgao: corpo.orgao,
-      dataSessao: corpo.dataSessao,
-      usuarioId: usuario.sub,
-      status: 'processando',
-    },
-  });
-
   try {
+    const responsaveisCadastrados = await prisma.responsavel.findMany({
+      select: { id: true, nome: true, email: true, ativo: true },
+    });
+    const mapaPorNome = new Map(
+      responsaveisCadastrados.map((r) => [r.nome.trim().toUpperCase(), r])
+    );
+
     const resultado = await chamarSeparar({
-      arquivo,
-      nomeArquivo: `${lote.id}.csv`,
-      pautas: corpo.pautas,
+      arquivo: params.arquivo,
+      nomeArquivo: `${params.loteId}.csv`,
+      pautas: params.pautas,
       responsaveisCadastrados: responsaveisCadastrados.map((r) => r.nome),
-      totalAcordaos: corpo.totalAcordaos,
+      totalAcordaos: params.totalAcordaos,
     });
 
     const normalizar = (nome: string) => nome.trim().toUpperCase();
@@ -81,9 +80,12 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    let enviados = 0;
-    const falhas: string[] = [];
     const totalGrupos = resultado.grupos.length;
+
+    await prisma.loteEnvio.update({
+      where: { id: params.loteId },
+      data: { totalEnvios: totalGrupos },
+    });
 
     for (const [indice, grupo] of resultado.grupos.entries()) {
       const responsavel = mapaPorNome.get(normalizar(grupo.responsavel));
@@ -93,15 +95,15 @@ export default defineEventHandler(async (event) => {
 
       const html = montarHtml(grupo.responsavel, grupo.tarefas);
       const assunto = montarAssunto(
-        corpo.orgao!,
-        corpo.dataSessao!,
+        params.orgao,
+        params.dataSessao,
         grupo.responsavel
       );
       const para = emailDestino(responsavel, emailPadraoInativo);
 
       const registroEnvio = await prisma.envio.create({
         data: {
-          loteId: lote.id,
+          loteId: params.loteId,
           responsavelId: responsavel.id,
           tarefas: grupo.tarefas,
           para,
@@ -121,13 +123,11 @@ export default defineEventHandler(async (event) => {
           where: { id: registroEnvio.id },
           data: { status: 'enviado', enviadoEm: new Date() },
         });
-        enviados++;
       } catch {
         await prisma.envio.update({
           where: { id: registroEnvio.id },
           data: { status: 'falhou' },
         });
-        falhas.push(grupo.responsavel);
       }
 
       if (indice < totalGrupos - 1) {
@@ -136,36 +136,77 @@ export default defineEventHandler(async (event) => {
     }
 
     await prisma.loteEnvio.update({
-      where: { id: lote.id },
+      where: { id: params.loteId },
       data: { status: 'processado' },
     });
-
-    await rm(caminho, { force: true });
-
-    return {
-      loteId: lote.id,
-      totalAcordaos: resultado.total_acordaos,
-      totalEnvios: resultado.grupos.length,
-      enviados,
-      falhas,
-    };
   } catch (erro) {
     await prisma.loteEnvio.update({
-      where: { id: lote.id },
-      data: { status: 'falhou' },
+      where: { id: params.loteId },
+      data: {
+        status: 'falhou',
+        erro: mensagemDeErroDoProcessamento(erro),
+      },
     });
-    if (erro instanceof ErroPythonService) {
-      const detalhe = erro.detalhe;
-      if (
-        typeof detalhe === 'object' &&
-        detalhe.tipo === 'responsaveis_faltantes'
-      ) {
-        throw createError({
-          statusCode: 422,
-          message: `Responsável(is) não cadastrado(s): ${detalhe.faltantes?.join(', ')}. Cadastre antes de processar.`,
-        });
-      }
-    }
-    throw erro;
+  } finally {
+    await rm(caminho, { force: true });
   }
+}
+
+export default defineEventHandler(async (event) => {
+  const usuario = getUsuarioAutenticado(event);
+  const corpo = (await readBody(event)) as CorpoEnvio;
+
+  if (!corpo.token || !corpo.pautas || !corpo.orgao || !corpo.dataSessao) {
+    throw createError({
+      statusCode: 422,
+      message: 'token, pautas, orgao e dataSessao são obrigatórios.',
+    });
+  }
+
+  const pautasVazias = Object.entries(corpo.pautas)
+    .filter(([, valor]) => !String(valor).trim())
+    .map(([desde]) => desde);
+  if (pautasVazias.length > 0) {
+    throw createError({
+      statusCode: 422,
+      message: `Rótulo de pauta não informado para: ${pautasVazias.join(', ')}.`,
+    });
+  }
+
+  const caminho = join(
+    resolve(process.cwd(), config.uploadDir),
+    `${corpo.token}.csv`
+  );
+  let arquivo: Buffer;
+  try {
+    arquivo = await readFile(caminho);
+  } catch {
+    throw createError({
+      statusCode: 404,
+      message: 'Arquivo não encontrado ou expirado. Reenvie o upload.',
+    });
+  }
+
+  const lote = await prisma.loteEnvio.create({
+    data: {
+      arquivoOrigem: corpo.arquivoOrigem || corpo.token,
+      orgao: corpo.orgao,
+      dataSessao: corpo.dataSessao,
+      usuarioId: usuario.sub,
+      status: 'processando',
+    },
+  });
+
+  void processarLote({
+    loteId: lote.id,
+    token: corpo.token,
+    arquivo,
+    arquivoOrigem: corpo.arquivoOrigem || corpo.token,
+    pautas: corpo.pautas,
+    orgao: corpo.orgao,
+    dataSessao: corpo.dataSessao,
+    totalAcordaos: corpo.totalAcordaos,
+  });
+
+  return { loteId: lote.id, status: 'processando' };
 });
