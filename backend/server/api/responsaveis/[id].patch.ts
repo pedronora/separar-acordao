@@ -32,6 +32,30 @@ export default defineEventHandler(async (event) => {
     dados.ativo = Boolean(corpo.ativo);
   }
 
+  if (dados.nome) {
+    const atual = await prisma.responsavel.findUnique({
+      where: { id },
+      select: { nome: true },
+    });
+    if (!atual) {
+      throw createError({
+        statusCode: 404,
+        message: 'Responsável não encontrado.',
+      });
+    }
+    if (atual.nome !== dados.nome) {
+      const existe = await prisma.responsavel.findUnique({
+        where: { nome: dados.nome },
+      });
+      if (existe) {
+        throw createError({
+          statusCode: 409,
+          message: 'Já existe um responsável com este nome.',
+        });
+      }
+    }
+  }
+
   try {
     return await prisma.responsavel.update({
       where: { id },
