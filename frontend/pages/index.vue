@@ -33,7 +33,7 @@ const podeEnviar = computed(() => {
     return false;
   }
   const pautasCompletas = analise.value.desdes.every(
-    (desde) => String(pautas[desde] ?? '').trim() !== ''
+    (desde: string) => String(pautas[desde] ?? '').trim() !== ''
   );
   return (
     pautasCompletas &&
@@ -47,7 +47,7 @@ const progresso = computed(() => {
     return { enviados: 0, total: 0, restantes: 0 };
   }
   const enviados = lote.value.envios.filter(
-    (e) => e.status === 'enviado'
+    (e: EnvioDetalhe) => e.status === 'enviado'
   ).length;
   const total = lote.value.totalEnvios ?? lote.value.envios.length;
   return { enviados, total, restantes: total - enviados };
@@ -85,7 +85,9 @@ const enviosOrdenados = computed(() => {
 });
 
 const primeiroPendente = computed(() =>
-  enviosOrdenados.value.findIndex((e) => e.status === 'pendente')
+  enviosOrdenados.value.findIndex(
+    (e: EnvioDetalhe) => e.status === 'pendente'
+  )
 );
 
 function formatoTempo(segundos: number) {
@@ -99,7 +101,7 @@ function formatoTempo(segundos: number) {
 const concluidoComFalhas = computed(
   () =>
     lote.value?.status === 'processado' &&
-    lote.value.envios.some((e) => e.status === 'falhou')
+    lote.value.envios.some((e: EnvioDetalhe) => e.status === 'falhou')
 );
 
 async function consultarLote(id: string) {
@@ -133,7 +135,7 @@ function pararAcompanhamento() {
 
 watch(
   () => lote.value?.status,
-  (status) => {
+  (status: LoteDetalhe['status'] | undefined) => {
     if (status && status !== 'processando') {
       pararAcompanhamento();
     }
