@@ -8,6 +8,15 @@ export interface TarefaEmail {
   pauta: string;
 }
 
+export function escaparHtml(texto: string): string {
+  return texto
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 export function montarLinhas(tarefas: TarefaEmail[]): string {
   return tarefas
     .map((tarefa, indice) => {
@@ -17,8 +26,8 @@ export function montarLinhas(tarefas: TarefaEmail[]): string {
       return `
             <tr style="color: black; background-color: ${fundo};">
                 <td style="${celula}">${indice + 1}</td>
-                <td style="${celula}">${tarefa.autos}</td>
-                <td style="${celula}">${tarefa.pauta}</td>
+                <td style="${celula}">${escaparHtml(tarefa.autos)}</td>
+                <td style="${celula}">${escaparHtml(tarefa.pauta)}</td>
             </tr>`;
     })
     .join('\n');
@@ -32,7 +41,7 @@ export function montarHtml(
     'padding: 10px; text-align: center; border: 1px solid #dddddd; background-color: #f2f2f2; color: black;';
   return `
     <div style="text-align: center;">
-        <div style="display: inline-block; text-align: left; width: 100%; max-width: 600px; margin-bottom: 5px;">Responsável: <strong>${responsavel}</strong></div>
+        <div style="display: inline-block; text-align: left; width: 100%; max-width: 600px; margin-bottom: 5px;">Responsável: <strong>${escaparHtml(responsavel)}</strong></div>
         <table style="width: 100%; max-width: 600px; border-collapse: collapse; margin: 0 auto;">
             <thead>
                 <tr>
