@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { emailDestino } from '../server/utils/configuracoes';
 import {
   montarAssunto,
   montarHtml,
@@ -47,5 +48,23 @@ describe('montarLinhas', () => {
     const linhas = montarLinhas(tarefas);
     const primeira = linhas.slice(0, linhas.indexOf('</tr>'));
     expect(primeira).toContain('#f9f9f9');
+  });
+});
+
+describe('emailDestino', () => {
+  it('retorna o e-mail do responsável quando ativo', () => {
+    const destino = emailDestino(
+      { ativo: true, email: 'ana@trt12.jus.br' },
+      'padrao@trt12.jus.br'
+    );
+    expect(destino).toBe('ana@trt12.jus.br');
+  });
+
+  it('retorna o e-mail padrão quando o responsável é inativo', () => {
+    const destino = emailDestino(
+      { ativo: false, email: 'bruno@trt12.jus.br' },
+      'padrao@trt12.jus.br'
+    );
+    expect(destino).toBe('padrao@trt12.jus.br');
   });
 });

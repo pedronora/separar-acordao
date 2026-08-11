@@ -30,7 +30,10 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     restart: unless-stopped
     depends_on:
       db:
@@ -52,6 +55,9 @@ services:
       EMAIL_DELAY_MAX: ${EMAIL_DELAY_MAX:-0}
       PYTHON_SERVICE_URL: http://python-service:8000
       UPLOAD_DIR: /tmp/uploads
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@trt12.jus.br}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-troque-esta-senha}
+      SEED_ADMIN_NOME: ${SEED_ADMIN_NOME:-Administrador}
     volumes:
       - uploads:/tmp/uploads
     ports:

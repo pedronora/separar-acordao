@@ -37,6 +37,7 @@ services:
       DATABASE_URL: postgresql://app:app@db:5432/app
       PORT: 3001
       JWT_SECRET: dev-secret
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -48,11 +49,15 @@ services:
       EMAIL_DELAY_MAX: ${EMAIL_DELAY_MAX:-0}
       PYTHON_SERVICE_URL: http://python-service:8000
       UPLOAD_DIR: /tmp/uploads
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@trt12.jus.br}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-troque-esta-senha}
+      SEED_ADMIN_NOME: ${SEED_ADMIN_NOME:-Administrador}
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
+    image: separar-acordao-frontend-dev
     build:
       context: ./frontend
       target: dev

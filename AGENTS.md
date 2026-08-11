@@ -55,6 +55,7 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
   - `responsaveis` (destinatários pré-cadastrados): id, nome, email, ativo, criado_em, atualizado_em.
   - `lotes_envio` (um processamento de arquivo): id, arquivo_origem, usuario_id (quem processou), criado_em, status.
   - `envios` (um e-mail para um responsável dentro de um lote): id, lote_id, responsavel_id, tarefas (JSON ou tabela relacionada), enviado_em, reenviado_de (nullable, self-reference), status (`pendente`, `enviado`, `falhou`).
+  - `configuracoes` (chave-valor, editável pela interface): chave, valor, atualizado_em. Chave usada: `email_padrao_responsavel_inativo` (e-mail padrão para envios de responsáveis inativos).
 - Migrations gerenciadas via Prisma Migrate — nunca alterar o schema do banco manualmente em produção.
 
 ### Autenticação

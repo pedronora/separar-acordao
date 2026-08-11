@@ -2,6 +2,10 @@ import { readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { config } from '../../utils/config';
+import {
+  emailDestino,
+  obterEmailPadraoInativo,
+} from '../../utils/configuracoes';
 
 interface CorpoEnvio {
   token?: string;
@@ -38,9 +42,8 @@ export default defineEventHandler(async (event) => {
   const responsaveisCadastrados = await prisma.responsavel.findMany({
     select: { id: true, nome: true, email: true, ativo: true },
   });
-  const ativos = responsaveisCadastrados.filter((r) => r.ativo);
   const mapaPorNome = new Map(
-    ativos.map((r) => [r.nome.trim().toUpperCase(), r])
+    responsaveisCadastrados.map((r) => [r.nome.trim().toUpperCase(), r])
   );
 
   const lote = await prisma.loteEnvio.create({
@@ -58,18 +61,32 @@ export default defineEventHandler(async (event) => {
       arquivo,
       nomeArquivo: `${lote.id}.csv`,
       pautas: corpo.pautas,
-      responsaveisCadastrados: ativos.map((r) => r.nome),
+      responsaveisCadastrados: responsaveisCadastrados.map((r) => r.nome),
       totalAcordaos: corpo.totalAcordaos,
     });
+
+    const normalizar = (nome: string) => nome.trim().toUpperCase();
+    const inativosNoLote = resultado.grupos.filter((grupo) => {
+      const responsavel = mapaPorNome.get(normalizar(grupo.responsavel));
+      return responsavel && !responsavel.ativo;
+    });
+    let emailPadraoInativo = '';
+    if (inativosNoLote.length > 0) {
+      emailPadraoInativo = await obterEmailPadraoInativo();
+      if (!emailPadraoInativo) {
+        throw createError({
+          statusCode: 422,
+          message: `Responsável(is) inativo(s) no lote (${inativosNoLote.map((g) => g.responsavel).join(', ')}). Configure o e-mail padrão para responsáveis inativos antes de processar.`,
+        });
+      }
+    }
 
     let enviados = 0;
     const falhas: string[] = [];
     const totalGrupos = resultado.grupos.length;
 
     for (const [indice, grupo] of resultado.grupos.entries()) {
-      const responsavel = mapaPorNome.get(
-        grupo.responsavel.trim().toUpperCase()
-      );
+      const responsavel = mapaPorNome.get(normalizar(grupo.responsavel));
       if (!responsavel) {
         continue;
       }
@@ -92,7 +109,7 @@ export default defineEventHandler(async (event) => {
 
       try {
         await enviarEmail({
-          to: responsavel.email,
+          to: emailDestino(responsavel, emailPadraoInativo),
           subject: assunto,
           html,
         });
