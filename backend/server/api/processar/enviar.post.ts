@@ -27,6 +27,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const pautasVazias = Object.entries(corpo.pautas)
+    .filter(([, valor]) => !String(valor).trim())
+    .map(([desde]) => desde);
+  if (pautasVazias.length > 0) {
+    throw createError({
+      statusCode: 422,
+      message: `Rótulo de pauta não informado para: ${pautasVazias.join(', ')}.`,
+    });
+  }
+
   const diretorio = resolve(process.cwd(), config.uploadDir);
   const caminho = join(diretorio, `${corpo.token}.csv`);
   let arquivo: Buffer;

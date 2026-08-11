@@ -8,7 +8,7 @@ const analise = ref<AnalisarResultado | null>(null);
 const resultado = ref<ResultadoEnvio | null>(null);
 
 const arquivo = ref<File | null>(null);
-const pautas = reactive<Record<string, string>>({});
+const pautas = ref<Record<string, string>>({});
 const orgao = ref('');
 const dataSessao = ref('');
 const totalAcordaos = ref<number | null>(null);
@@ -20,7 +20,34 @@ function selecionarArquivo(evento: Event) {
   const alvo = evento.target as HTMLInputElement;
   arquivo.value = alvo.files?.[0] ?? null;
   resultado.value = null;
+  limparPautas();
 }
+
+function limparPautas() {
+  pautas.value = {};
+}
+
+const camposPendentes = computed(() => {
+  const pendentes: string[] = [];
+  if (!analise.value) {
+    return pendentes;
+  }
+  const semPauta = analise.value.desdes.filter(
+    (desde) => !String(pautas.value[desde] ?? '').trim()
+  );
+  if (semPauta.length > 0) {
+    pendentes.push(`rótulo da pauta (${semPauta.length} campo(s))`);
+  }
+  if (!orgao.value.trim()) {
+    pendentes.push('órgão colegiado');
+  }
+  if (!dataSessao.value.trim()) {
+    pendentes.push('data da sessão');
+  }
+  return pendentes;
+});
+
+const podeEnviar = computed(() => camposPendentes.value.length === 0);
 
 async function analisarArquivo() {
   if (!arquivo.value) {
@@ -47,6 +74,13 @@ async function enviar() {
   if (!analise.value) {
     return;
   }
+  const semPauta = analise.value.desdes.filter(
+    (desde) => !String(pautas.value[desde] ?? '').trim()
+  );
+  if (semPauta.length > 0) {
+    erroMsg.value = `Informe o rótulo da pauta para: ${semPauta.join(', ')}.`;
+    return;
+  }
   carregando.value = true;
   erroMsg.value = '';
   try {
@@ -55,7 +89,7 @@ async function enviar() {
       body: {
         token: analise.value.token,
         arquivoOrigem: analise.value.arquivoOrigem,
-        pautas,
+        pautas: pautas.value,
         orgao: orgao.value,
         dataSessao: dataSessao.value,
         totalAcordaos: totalAcordaos.value ?? undefined,
@@ -138,17 +172,27 @@ async function enviar() {
         <input id="total" v-model.number="totalAcordaos" type="number" />
       </div>
 
-      <button class="btn" :disabled="carregando" @click="enviar">
+      <button
+        class="btn"
+        :disabled="!podeEnviar || carregando"
+        @click="enviar"
+      >
         {{ carregando ? 'Enviando...' : 'Separar e enviar e-mails' }}
       </button>
       <button
         class="btn btn-secundario"
         :disabled="carregando"
         style="margin-left: 0.5rem"
-        @click="analise = null"
+        @click="
+          analise = null;
+          limparPautas();
+        "
       >
         Trocar arquivo
       </button>
+      <p v-if="!podeEnviar" class="aviso">
+        Preencha os campos obrigatórios: {{ camposPendentes.join(', ') }}.
+      </p>
     </section>
 
     <section v-if="resultado" class="card">
@@ -163,6 +207,12 @@ async function enviar() {
 </template>
 
 <style scoped>
+.aviso {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
 .pautas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
