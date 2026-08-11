@@ -80,7 +80,9 @@ cd frontend && pnpm install
 
 # Backend
 cd backend && pnpm install
-cd backend && pnpm prisma migrate dev   # aplica migrations em dev
+cd backend && pnpm exec nuxi prepare   # gera .nuxt (tsconfig exigido pelo prisma.config.ts)
+cd backend && pnpm prisma generate     # gera o cliente em server/generated/prisma
+cd backend && pnpm prisma migrate dev  # aplica migrations em dev
 
 # Python service
 cd python-service && uv sync            # ou: pip install -r requirements.txt

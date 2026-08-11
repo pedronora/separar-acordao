@@ -1,10 +1,16 @@
-const { spawnSync } = require('node:child_process');
+import { spawnSync } from 'node:child_process';
 
-const { PrismaClient } = require('@prisma/client');
+import { PrismaPg } from '@prisma/adapter-pg';
 
-async function main() {
-  const prisma = new PrismaClient();
-  let total;
+import { PrismaClient } from '../server/generated/prisma/client';
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
+const prisma = new PrismaClient({ adapter });
+
+async function main(): Promise<void> {
+  let total: number;
   try {
     total = await prisma.usuario.count();
   } finally {

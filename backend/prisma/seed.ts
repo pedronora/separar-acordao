@@ -1,7 +1,12 @@
 import argon2 from 'argon2';
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+import { PrismaClient } from '../server/generated/prisma/client';
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main(): Promise<void> {
   const email = process.env.SEED_ADMIN_EMAIL;
