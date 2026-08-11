@@ -15,8 +15,8 @@ async function sair() {
         <NuxtLink to="/" class="logo"> Separar Acórdãos </NuxtLink>
         <nav v-if="usuario" class="nav">
           <NuxtLink to="/">Novo envio</NuxtLink>
-          <NuxtLink to="/configuracoes">Configurações</NuxtLink>
           <NuxtLink to="/historico">Histórico</NuxtLink>
+          <NuxtLink to="/configuracoes">Configurações</NuxtLink>
           <span class="usuario">{{ usuario.nome }}</span>
           <button class="btn btn-secundario" @click="sair">Sair</button>
         </nav>
