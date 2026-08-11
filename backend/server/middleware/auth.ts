@@ -1,4 +1,8 @@
 export default defineEventHandler((event) => {
+  if (event.method === 'OPTIONS') {
+    return;
+  }
+
   const url = getRequestURL(event).pathname;
   if (url.startsWith('/api/auth/login') || url.startsWith('/api/health')) {
     return;
