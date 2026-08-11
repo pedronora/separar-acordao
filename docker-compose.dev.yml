@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  python-service:
+    build: ./python-service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./python-service/app:/app/app
+      - ./python-service/reference:/app/reference
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: ./backend
+    command: sh -c "pnpm install --frozen-lockfile && npx prisma generate && npx prisma migrate deploy && pnpm dev --host 0.0.0.0"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+      - uploads:/tmp/uploads
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/app
+      PORT: 3001
+      JWT_SECRET: dev-secret
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-acordaos.informe@gmail.com}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Gab. Des. Helio Bastida Lopes}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO:-gdhbl@trt12.jus.br}
+      EMAIL_DELAY_MIN: ${EMAIL_DELAY_MIN:-0}
+      EMAIL_DELAY_MAX: ${EMAIL_DELAY_MAX:-0}
+      PYTHON_SERVICE_URL: http://python-service:8000
+      UPLOAD_DIR: /tmp/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+      args:
+        NUXT_PUBLIC_API_BASE_URL: http://localhost:3001
+    command: sh -c "pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads:
+  backend_node_modules:
+  frontend_node_modules:

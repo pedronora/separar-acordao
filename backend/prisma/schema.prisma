@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  nome     String
+  senhaHash String  @map("senha_hash")
+  criadoEm DateTime @default(now()) @map("criado_em")
+  lotes    LoteEnvio[]
+
+  @@map("usuarios")
+}
+
+model Responsavel {
+  id           String   @id @default(cuid())
+  nome         String   @unique
+  email        String
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  envios       Envio[]
+
+  @@map("responsaveis")
+}
+
+model LoteEnvio {
+  id           String   @id @default(cuid())
+  arquivoOrigem String  @map("arquivo_origem")
+  orgao        String?
+  dataSessao   String?  @map("data_sessao")
+  usuarioId    String   @map("usuario_id")
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id])
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  status       LoteStatus @default(processando)
+  envios       Envio[]
+
+  @@map("lotes_envio")
+}
+
+model Envio {
+  id            String      @id @default(cuid())
+  loteId        String      @map("lote_id")
+  lote          LoteEnvio   @relation(fields: [loteId], references: [id])
+  responsavelId String      @map("responsavel_id")
+  responsavel   Responsavel @relation(fields: [responsavelId], references: [id])
+  tarefas       Json
+  enviadoEm     DateTime?   @map("enviado_em")
+  reenviadoDe   String?     @map("reenviado_de")
+  reenviadoDeRel Envio?     @relation("EnvioReenvio", fields: [reenviadoDe], references: [id])
+  reenvios      Envio[]     @relation("EnvioReenvio")
+  status        EnvioStatus @default(pendente)
+
+  @@map("envios")
+}
+
+enum LoteStatus {
+  processando
+  processado
+  falhou
+}
+
+enum EnvioStatus {
+  pendente
+  enviado
+  falhou
+}

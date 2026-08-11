@@ -1,0 +1,15 @@
+node_modules/
+.output/
+.nuxt/
+dist
+.pnpm-store/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store

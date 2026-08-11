@@ -1,0 +1,73 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  python-service:
+    build: ./python-service
+    restart: unless-stopped
+    environment:
+      MAX_FILE_SIZE_BYTES: 10485760
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      python-service:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://app:${POSTGRES_PASSWORD:-app}@db:5432/app
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-acordaos.informe@gmail.com}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Gab. Des. Helio Bastida Lopes}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO:-gdhbl@trt12.jus.br}
+      EMAIL_DELAY_MIN: ${EMAIL_DELAY_MIN:-0}
+      EMAIL_DELAY_MAX: ${EMAIL_DELAY_MAX:-0}
+      PYTHON_SERVICE_URL: http://python-service:8000
+      UPLOAD_DIR: /tmp/uploads
+    volumes:
+      - uploads:/tmp/uploads
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-http://localhost:3001}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+
+volumes:
+  pgdata:
+  uploads:

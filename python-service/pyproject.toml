@@ -1,0 +1,38 @@
+[project]
+name = "separar-acordao-python-service"
+version = "0.1.0"
+description = "Motor de separação de tarefas por pauta (baseado no notebook de referência)"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pandas>=2.2",
+  "python-multipart>=0.0.9",
+  "pydantic>=2.7",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "httpx>=0.27",
+  "ruff>=0.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ["reference"]
+
+[tool.ruff.lint]
+select = ["I", "F", "E", "W", "PL", "PT", "FAST"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
