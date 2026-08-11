@@ -26,7 +26,7 @@ services:
 
   backend:
     build: ./backend
-    command: sh -c "pnpm install --frozen-lockfile && npx prisma generate && npx prisma migrate deploy && pnpm dev --host 0.0.0.0"
+    command: sh -c "pnpm install --frozen-lockfile && npx prisma generate && npx prisma migrate deploy && npx tsx scripts/seed-if-empty.ts && pnpm dev --host 0.0.0.0"
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://app:app@db:5432/app
