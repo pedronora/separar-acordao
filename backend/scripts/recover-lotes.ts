@@ -1,8 +1,13 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+import { PrismaClient } from '../server/generated/prisma/client';
 
-async function main() {
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
+const prisma = new PrismaClient({ adapter });
+
+async function main(): Promise<void> {
   const resultado = await prisma.loteEnvio.updateMany({
     where: { status: 'processando' },
     data: {

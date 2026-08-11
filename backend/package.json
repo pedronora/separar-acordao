@@ -16,14 +16,14 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
-    "@prisma/client": "^6.2.1",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
     "argon2": "^0.41.1",
+    "dotenv": "^17.4.2",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^0.7.6",
@@ -34,7 +34,7 @@
     "eslint-config-prettier": "^9.1.0",
     "nuxt": "^3.15.4",
     "prettier": "^3.4.2",
-    "prisma": "^6.2.1",
+    "prisma": "^7.9.1",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "vitest": "^2.1.8"

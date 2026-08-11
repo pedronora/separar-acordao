@@ -2,6 +2,7 @@ node_modules/
 .output/
 .nuxt/
 dist
+**/server/generated/
 .pnpm-store/
 .venv/
 __pycache__/

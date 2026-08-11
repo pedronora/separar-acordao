@@ -4,6 +4,7 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
@@ -12,7 +13,7 @@ ARG CORS_ORIGIN=http://localhost:3000
 ENV CORS_ORIGIN=$CORS_ORIGIN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm prisma generate && pnpm build
+RUN npx nuxi prepare && pnpm prisma generate && pnpm build
 
 FROM base AS runtime
 ENV NODE_ENV=production
@@ -20,7 +21,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/server/generated ./server/generated
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/package.json ./package.json
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node scripts/recover-lotes.cjs && node scripts/seed-if-empty.cjs && node .output/server/index.mjs"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx scripts/recover-lotes.ts && npx tsx scripts/seed-if-empty.ts && node .output/server/index.mjs"]
