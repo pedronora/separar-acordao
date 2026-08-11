@@ -8,6 +8,8 @@ COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build
+ARG CORS_ORIGIN=http://localhost:3000
+ENV CORS_ORIGIN=$CORS_ORIGIN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm prisma generate && pnpm build

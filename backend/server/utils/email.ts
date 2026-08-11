@@ -70,6 +70,9 @@ function criarTransporter(): Transporter {
     auth: config.smtpUser
       ? { user: config.smtpUser, pass: config.smtpPassword }
       : undefined,
+    connectionTimeout: 20 * 1000,
+    greetingTimeout: 20 * 1000,
+    socketTimeout: 60 * 1000,
   });
 }
 
