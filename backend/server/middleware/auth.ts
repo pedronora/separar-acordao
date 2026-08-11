@@ -1,4 +1,7 @@
-export default defineEventHandler((event) => {
+import { verificarToken } from '../utils/auth';
+import { prisma } from '../utils/prisma';
+
+export default defineEventHandler(async (event) => {
   if (event.method === 'OPTIONS') {
     return;
   }
@@ -15,5 +18,13 @@ export default defineEventHandler((event) => {
     throw createError({ statusCode: 401, message: 'Não autenticado.' });
   }
 
-  event.context.auth = payload;
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: payload.sub },
+    select: { id: true, email: true, nome: true },
+  });
+  if (!usuario) {
+    throw createError({ statusCode: 401, message: 'Sessão inválida.' });
+  }
+
+  event.context.auth = usuario;
 });
