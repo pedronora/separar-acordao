@@ -140,32 +140,6 @@ async function enviar() {
       {{ erroMsg }}
     </p>
 
-    <p v-if="processando" class="sucesso">
-      <template v-if="lote?.totalEnvios">
-        {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
-        (restam {{ progresso.restantes }}) — pode levar alguns minutos.
-      </template>
-      <template v-else>
-        Separando as tarefas por pauta...
-      </template>
-    </p>
-    <p
-      v-else-if="lote && lote.status === 'processado' && !concluidoComFalhas"
-      class="sucesso"
-    >
-      Envio concluído: {{ progresso.enviados }}/{{ progresso.total }}
-      e-mails enviados com sucesso.
-    </p>
-    <p v-else-if="concluidoComFalhas" class="erro">
-      Envio concluído com falhas: {{ progresso.enviados }}/{{
-        progresso.total
-      }}
-      enviados.
-    </p>
-    <p v-else-if="lote && lote.status === 'falhou'" class="erro">
-      Falha no processamento: {{ lote.erro }}
-    </p>
-
     <section v-if="!analise" class="card">
       <h2>1. Upload do arquivo</h2>
       <p>Envie o CSV exportado do painel (tarefas "Assinar acórdão").</p>
@@ -239,15 +213,33 @@ async function enviar() {
 
     <section v-if="lote" class="card">
       <h2>3. Acompanhamento</h2>
-      <p v-if="processando">
-        O lote está sendo processado em segundo plano. Você pode sair desta
-        página e acompanhar pelo
-        <NuxtLink :to="`/lote/${lote.id}`">detalhe do lote</NuxtLink>.
+      <p v-if="processando" class="sucesso">
+        <template v-if="lote.totalEnvios">
+          {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
+          (restam {{ progresso.restantes }}) — pode levar alguns minutos.
+        </template>
+        <template v-else>
+          Separando as tarefas por pauta...
+        </template>
       </p>
-      <p v-else>
-        <NuxtLink :to="`/lote/${lote.id}`">
-          Ver detalhes do lote
-        </NuxtLink>
+      <p
+        v-else-if="lote.status === 'processado' && !concluidoComFalhas"
+        class="sucesso"
+      >
+        Envio concluído: {{ progresso.enviados }}/{{ progresso.total }}
+        e-mails enviados com sucesso.
+      </p>
+      <p v-else-if="concluidoComFalhas" class="erro">
+        Envio concluído com falhas: {{ progresso.enviados }}/{{
+          progresso.total
+        }}
+        enviados.
+      </p>
+      <p v-else-if="lote.status === 'falhou'" class="erro">
+        Falha no processamento: {{ lote.erro }}
+      </p>
+      <p v-if="!processando">
+        <NuxtLink :to="`/lote/${lote.id}`">Ver detalhes do lote</NuxtLink>
       </p>
     </section>
   </div>

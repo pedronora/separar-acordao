@@ -13,14 +13,11 @@ async function sair() {
     <header class="cabecalho">
       <div class="container cabecalho-inner">
         <NuxtLink to="/" class="logo"> Separar Acórdãos </NuxtLink>
-        <nav class="nav">
+        <nav v-if="usuario" class="nav">
           <NuxtLink to="/">Novo envio</NuxtLink>
-          <NuxtLink to="/responsaveis">Responsáveis</NuxtLink>
           <NuxtLink to="/configuracoes">Configurações</NuxtLink>
           <NuxtLink to="/historico">Histórico</NuxtLink>
-          <span v-if="usuario" class="usuario">
-            {{ usuario.nome }}
-          </span>
+          <span class="usuario">{{ usuario.nome }}</span>
           <button class="btn btn-secundario" @click="sair">Sair</button>
         </nav>
       </div>
