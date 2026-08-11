@@ -60,6 +60,14 @@ model Envio {
   @@map("envios")
 }
 
+model Configuracao {
+  chave        String   @id
+  valor        String
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("configuracoes")
+}
+
 enum LoteStatus {
   processando
   processado

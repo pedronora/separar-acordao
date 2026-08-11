@@ -1,3 +1,8 @@
+import {
+  emailDestino,
+  obterEmailPadraoInativo,
+} from '../../../utils/configuracoes';
+
 interface CorpoReenvio {
   envioIds?: string[];
 }
@@ -28,6 +33,20 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const inativosSelecionados = selecionados.filter(
+    (e) => !e.responsavel.ativo
+  );
+  let emailPadraoInativo = '';
+  if (inativosSelecionados.length > 0) {
+    emailPadraoInativo = await obterEmailPadraoInativo();
+    if (!emailPadraoInativo) {
+      throw createError({
+        statusCode: 422,
+        message: `Envio(s) de responsável(is) inativo(s) selecionado(s). Configure o e-mail padrão para responsáveis inativos antes de reenviar.`,
+      });
+    }
+  }
+
   const orgao = lote.orgao ?? '';
   const dataSessao = lote.dataSessao ?? '';
   let enviados = 0;
@@ -50,7 +69,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       await enviarEmail({
-        to: envio.responsavel.email,
+        to: emailDestino(envio.responsavel, emailPadraoInativo),
         subject: assunto,
         html,
       });

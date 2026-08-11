@@ -16,6 +16,7 @@ async function sair() {
         <nav class="nav">
           <NuxtLink to="/">Novo envio</NuxtLink>
           <NuxtLink to="/responsaveis">Responsáveis</NuxtLink>
+          <NuxtLink to="/configuracoes">Configurações</NuxtLink>
           <NuxtLink to="/historico">Histórico</NuxtLink>
           <span v-if="usuario" class="usuario">
             {{ usuario.nome }}

@@ -36,6 +36,10 @@ export interface ResultadoEnvio {
   falhas: string[];
 }
 
+export interface Configuracoes {
+  emailPadraoResponsavelInativo: string;
+}
+
 export interface LoteResumo {
   id: string;
   arquivoOrigem: string;
