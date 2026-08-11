@@ -49,7 +49,15 @@ async function reenviar(envioIds?: string[]) {
     });
     sucessoMsg.value = `Reenvio concluído: ${resultado.enviados}/${resultado.total} e-mails.`;
     selecionados.value = [];
-    function visualizarEnvio(envio: EnvioDetalhe) {
+    await carregar();
+  } catch (erro) {
+    erroMsg.value = mensagemDeErro(erro);
+  } finally {
+    reenviando.value = false;
+  }
+}
+
+function visualizarEnvio(envio: EnvioDetalhe) {
   envioVisualizado.value = envio;
 }
 
@@ -58,13 +66,6 @@ function fecharVisualizacao() {
 }
 
 await carregar();
-
-  } catch (erro) {
-    erroMsg.value = mensagemDeErro(erro);
-  } finally {
-    reenviando.value = false;
-  }
-}
 </script>
 
 <template>

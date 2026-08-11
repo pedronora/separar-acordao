@@ -9,5 +9,11 @@ export default (async () => {
         'vue/html-self-closing': 'off',
       },
     },
+    {
+      files: ['pages/lote/*.vue'],
+      rules: {
+        'vue/no-v-html': 'off',
+      },
+    },
   ];
 })();

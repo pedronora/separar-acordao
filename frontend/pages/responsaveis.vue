@@ -97,7 +97,7 @@ async function excluir(responsavel: Responsavel) {
   erroMsg.value = '';
   sucessoMsg.value = '';
   try {
-    await useApi<void>(`/api/responsaveis/${responsavel.id}`, {
+    await useApi<null>(`/api/responsaveis/${responsavel.id}`, {
       method: 'DELETE',
     });
     sucessoMsg.value = 'Responsável excluído.';
@@ -163,7 +163,11 @@ await listar();
                 <input v-model="editarNome" aria-label="Nome" />
               </td>
               <td>
-                <input v-model="editarEmail" type="email" aria-label="E-mail" />
+                <input
+                  v-model="editarEmail"
+                  type="email"
+                  aria-label="E-mail"
+                />
               </td>
               <td>
                 <span :class="r.ativo ? 'tag tag-verde' : 'tag tag-vermelha'">
@@ -190,10 +194,7 @@ await listar();
                   <button class="btn btn-secundario" @click="iniciarEdicao(r)">
                     Editar
                   </button>
-                  <button
-                    class="btn btn-secundario"
-                    @click="alternarAtivo(r)"
-                  >
+                  <button class="btn btn-secundario" @click="alternarAtivo(r)">
                     {{ r.ativo ? 'Desativar' : 'Ativar' }}
                   </button>
                   <button class="btn btn-perigo" @click="excluir(r)">
