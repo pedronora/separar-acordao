@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
     dataSessao: lote.dataSessao,
     criadoEm: lote.criadoEm,
     status: lote.status,
+    erro: lote.erro,
     usuario: lote.usuario.nome,
     totalEnvios: lote.envios.length,
     enviados: lote.envios.filter((e) => e.status === 'enviado').length,

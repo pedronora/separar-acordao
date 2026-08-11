@@ -28,12 +28,9 @@ export interface AnalisarResultado {
   totalAcordaos: number;
 }
 
-export interface ResultadoEnvio {
+export interface EnvioIniciado {
   loteId: string;
-  totalAcordaos: number;
-  totalEnvios: number;
-  enviados: number;
-  falhas: string[];
+  status: string;
 }
 
 export interface Configuracoes {
@@ -47,6 +44,7 @@ export interface LoteResumo {
   dataSessao: string | null;
   criadoEm: string;
   status: 'processando' | 'processado' | 'falhou';
+  erro: string | null;
   usuario: string;
   totalEnvios: number;
   enviados: number;
@@ -76,6 +74,8 @@ export interface LoteDetalhe {
   dataSessao: string | null;
   criadoEm: string;
   status: 'processando' | 'processado' | 'falhou';
+  erro: string | null;
+  totalEnvios: number | null;
   usuario: { id: string; nome: string; email: string };
   envios: EnvioDetalhe[];
 }
