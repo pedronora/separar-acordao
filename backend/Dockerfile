@@ -19,7 +19,8 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/package.json ./package.json
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node .output/server/index.mjs"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node scripts/seed-if-empty.cjs && node .output/server/index.mjs"]
