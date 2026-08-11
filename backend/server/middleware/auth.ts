@@ -26,5 +26,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Sessão inválida.' });
   }
 
-  event.context.auth = usuario;
+  event.context.auth = {
+    sub: usuario.id,
+    email: usuario.email,
+    nome: usuario.nome,
+  };
 });
