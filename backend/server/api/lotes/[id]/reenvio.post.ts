@@ -53,23 +53,27 @@ export default defineEventHandler(async (event) => {
   const falhas: string[] = [];
 
   for (const envio of selecionados) {
+    const tarefas = envio.tarefas as TarefaEmail[];
+    const html = montarHtml(envio.responsavel.nome, tarefas);
+    const assunto = montarAssunto(orgao, dataSessao, envio.responsavel.nome);
+    const para = emailDestino(envio.responsavel, emailPadraoInativo);
+
     const novoEnvio = await prisma.envio.create({
       data: {
         loteId: lote.id,
         responsavelId: envio.responsavelId,
         tarefas: envio.tarefas,
+        para,
+        assunto,
+        corpoHtml: html,
         reenviadoDe: envio.id,
         status: 'pendente',
       },
     });
 
-    const tarefas = envio.tarefas as TarefaEmail[];
-    const html = montarHtml(envio.responsavel.nome, tarefas);
-    const assunto = montarAssunto(orgao, dataSessao, envio.responsavel.nome);
-
     try {
       await enviarEmail({
-        to: emailDestino(envio.responsavel, emailPadraoInativo),
+        to: para,
         subject: assunto,
         html,
       });
