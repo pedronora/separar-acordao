@@ -24,6 +24,20 @@ let intervalo: ReturnType<typeof setInterval> | null = null;
 
 const processando = computed(() => lote.value?.status === 'processando');
 
+const podeEnviar = computed(() => {
+  if (!analise.value) {
+    return false;
+  }
+  const pautasCompletas = analise.value.desdes.every(
+    (desde) => String(pautas[desde] ?? '').trim() !== ''
+  );
+  return (
+    pautasCompletas &&
+    orgao.value.trim() !== '' &&
+    dataSessao.value.trim() !== ''
+  );
+});
+
 const progresso = computed(() => {
   if (!lote.value) {
     return { enviados: 0, total: 0, restantes: 0 };
@@ -196,11 +210,15 @@ async function enviar() {
 
       <button
         class="btn"
-        :disabled="carregando || processando"
+        :disabled="carregando || processando || !podeEnviar"
         @click="enviar"
       >
         {{ carregando ? 'Enviando...' : 'Separar e enviar e-mails' }}
       </button>
+      <p v-if="!podeEnviar && !carregando && !processando" class="dica">
+        Preencha o rótulo de todas as pautas, o órgão e a data da sessão para
+        habilitar o envio.
+      </p>
       <button
         class="btn btn-secundario"
         :disabled="carregando || processando"
@@ -250,6 +268,12 @@ async function enviar() {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.75rem;
+}
+
+.dica {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--c-texto-suave, #888);
 }
 
 .duas-colunas {
