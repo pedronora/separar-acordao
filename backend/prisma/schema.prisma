@@ -51,6 +51,9 @@ model Envio {
   responsavelId String      @map("responsavel_id")
   responsavel   Responsavel @relation(fields: [responsavelId], references: [id])
   tarefas       Json
+  para          String?
+  assunto       String?
+  corpoHtml     String?     @map("corpo_html")
   enviadoEm     DateTime?   @map("enviado_em")
   reenviadoDe   String?     @map("reenviado_de")
   reenviadoDeRel Envio?     @relation("EnvioReenvio", fields: [reenviadoDe], references: [id])

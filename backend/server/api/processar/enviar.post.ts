@@ -91,25 +91,29 @@ export default defineEventHandler(async (event) => {
         continue;
       }
 
-      const registroEnvio = await prisma.envio.create({
-        data: {
-          loteId: lote.id,
-          responsavelId: responsavel.id,
-          tarefas: grupo.tarefas,
-          status: 'pendente',
-        },
-      });
-
       const html = montarHtml(grupo.responsavel, grupo.tarefas);
       const assunto = montarAssunto(
         corpo.orgao!,
         corpo.dataSessao!,
         grupo.responsavel
       );
+      const para = emailDestino(responsavel, emailPadraoInativo);
+
+      const registroEnvio = await prisma.envio.create({
+        data: {
+          loteId: lote.id,
+          responsavelId: responsavel.id,
+          tarefas: grupo.tarefas,
+          para,
+          assunto,
+          corpoHtml: html,
+          status: 'pendente',
+        },
+      });
 
       try {
         await enviarEmail({
-          to: emailDestino(responsavel, emailPadraoInativo),
+          to: para,
           subject: assunto,
           html,
         });

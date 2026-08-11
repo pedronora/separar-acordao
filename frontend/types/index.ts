@@ -56,6 +56,9 @@ export interface LoteResumo {
 export interface EnvioDetalhe {
   id: string;
   status: 'pendente' | 'enviado' | 'falhou';
+  para: string | null;
+  assunto: string | null;
+  corpoHtml: string | null;
   enviadoEm: string | null;
   reenviadoDe: string | null;
   tarefas: TarefaSeparacao[];

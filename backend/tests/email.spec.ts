@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { emailDestino } from '../server/utils/configuracoes';
 import {
+  escaparHtml,
   montarAssunto,
   montarHtml,
   montarLinhas,
@@ -26,6 +27,14 @@ describe('montarAssunto', () => {
   });
 });
 
+describe('escaparHtml', () => {
+  it('escapa caracteres especiais', () => {
+    expect(escaparHtml('<b>& "aspas"</b>')).toBe(
+      '&lt;b&gt;&amp; &quot;aspas&quot;&lt;/b&gt;'
+    );
+  });
+});
+
 describe('montarHtml', () => {
   it('inclui responsável, autos e pauta de cada tarefa', () => {
     const html = montarHtml('ANA', tarefas);
@@ -34,6 +43,15 @@ describe('montarHtml', () => {
     expect(html).toContain('Pauta 13:05 (Sala com 98)');
     expect(html).toContain('PROCESSO');
     expect(html).toContain('PAUTA');
+  });
+
+  it('escapa conteúdo do CSV no HTML', () => {
+    const html = montarHtml('ANA', [
+      { autos: '<script>alert(1)</script>', pauta: 'a & b' },
+    ]);
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).toContain('a &amp; b');
   });
 });
 

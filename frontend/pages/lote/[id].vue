@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
-import type { LoteDetalhe } from '~/types';
+import type { EnvioDetalhe, LoteDetalhe } from '~/types';
 
 definePageMeta({ middleware: 'auth' });
 
@@ -11,6 +11,7 @@ const selecionados = ref<string[]>([]);
 const reenviando = ref(false);
 const erroMsg = ref('');
 const sucessoMsg = ref('');
+const envioVisualizado = ref<EnvioDetalhe | null>(null);
 
 async function carregar() {
   erroMsg.value = '';
@@ -54,6 +55,14 @@ async function reenviar(envioIds?: string[]) {
   } finally {
     reenviando.value = false;
   }
+}
+
+function visualizarEnvio(envio: EnvioDetalhe) {
+  envioVisualizado.value = envio;
+}
+
+function fecharVisualizacao() {
+  envioVisualizado.value = null;
 }
 
 await carregar();
@@ -143,7 +152,15 @@ await carregar();
                   @change="alternarSelecao(envio.id)"
                 />
               </td>
-              <td>{{ envio.responsavel.nome }}</td>
+              <td>
+                <button
+                  class="link-responsavel"
+                  :disabled="!envio.corpoHtml"
+                  @click="visualizarEnvio(envio)"
+                >
+                  {{ envio.responsavel.nome }}
+                </button>
+              </td>
               <td>{{ envio.tarefas.length }}</td>
               <td>
                 <span
@@ -170,6 +187,38 @@ await carregar();
         </table>
       </section>
     </template>
+
+    <div
+      v-if="envioVisualizado"
+      class="modal-overlay"
+      @click.self="fecharVisualizacao"
+    >
+      <div class="modal">
+        <div class="modal-cabecalho">
+          <h2>{{ envioVisualizado.responsavel.nome }}</h2>
+          <button class="btn btn-secundario" @click="fecharVisualizacao">
+            Fechar
+          </button>
+        </div>
+        <dl class="detalhes">
+          <div>
+            <dt>Para</dt>
+            <dd>{{ envioVisualizado.para || '-' }}</dd>
+          </div>
+          <div>
+            <dt>Assunto</dt>
+            <dd>{{ envioVisualizado.assunto || '-' }}</dd>
+          </div>
+        </dl>
+        <div class="corpo-email">
+          <div
+            v-if="envioVisualizado.corpoHtml"
+            v-html="envioVisualizado.corpoHtml"
+          />
+          <p v-else class="erro">Conteúdo indisponível para este envio.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -189,5 +238,64 @@ await carregar();
 
 .detalhes dd {
   margin: 0.15rem 0 0;
+}
+
+.link-responsavel {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cor-primaria);
+  font: inherit;
+  cursor: pointer;
+}
+
+.link-responsavel:hover {
+  text-decoration: underline;
+}
+
+.link-responsavel:disabled {
+  color: var(--cor-texto-suave);
+  cursor: default;
+  text-decoration: none;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 50;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.modal-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-cabecalho h2 {
+  margin: 0;
+}
+
+.corpo-email {
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: #fff;
+  overflow-x: auto;
 }
 </style>
