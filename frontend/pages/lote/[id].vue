@@ -18,7 +18,7 @@ const progresso = computed(() => {
     return { enviados: 0, total: 0, restantes: 0 };
   }
   const enviados = lote.value.envios.filter(
-    (e) => e.status === 'enviado'
+    (e: EnvioDetalhe) => e.status === 'enviado'
   ).length;
   const total = lote.value.totalEnvios ?? lote.value.envios.length;
   return { enviados, total, restantes: total - enviados };
@@ -53,7 +53,7 @@ function pararAcompanhamento() {
 
 watch(
   () => lote.value?.status,
-  (status) => {
+  (status: LoteDetalhe['status'] | undefined) => {
     if (status && status !== 'processando') {
       pararAcompanhamento();
     }

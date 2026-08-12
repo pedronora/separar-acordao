@@ -18,7 +18,7 @@ export async function useApi<T>(
       baseURL: apiBaseUrl(),
       ...options,
       headers,
-    });
+    } as Parameters<typeof $fetch<T>>[1]);
   } catch (erro) {
     const fetchErro = erro as FetchError;
     if (fetchErro?.statusCode === 401 && token.value) {

@@ -2,6 +2,7 @@
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import type {
   AnalisarResultado,
+  EnvioDetalhe,
   EnvioIniciado,
   LoteDetalhe,
 } from '~/types';
@@ -22,6 +23,9 @@ const erroMsg = ref('');
 
 let intervalo: ReturnType<typeof setInterval> | null = null;
 
+const inicioAcompanhamento = ref(0);
+const segundosDecorridos = ref(0);
+
 const processando = computed(() => lote.value?.status === 'processando');
 
 const podeEnviar = computed(() => {
@@ -29,7 +33,7 @@ const podeEnviar = computed(() => {
     return false;
   }
   const pautasCompletas = analise.value.desdes.every(
-    (desde) => String(pautas[desde] ?? '').trim() !== ''
+    (desde: string) => String(pautas[desde] ?? '').trim() !== ''
   );
   return (
     pautasCompletas &&
@@ -43,16 +47,61 @@ const progresso = computed(() => {
     return { enviados: 0, total: 0, restantes: 0 };
   }
   const enviados = lote.value.envios.filter(
-    (e) => e.status === 'enviado'
+    (e: EnvioDetalhe) => e.status === 'enviado'
   ).length;
   const total = lote.value.totalEnvios ?? lote.value.envios.length;
   return { enviados, total, restantes: total - enviados };
 });
 
+const percentual = computed(() => {
+  if (progresso.value.total === 0) {
+    return 0;
+  }
+  return Math.min(100, Math.round((progresso.value.enviados / progresso.value.total) * 100));
+});
+
+const ordemStatus = ['enviado', 'pendente', 'falhou'] as const;
+
+function rotuloStatus(status: EnvioDetalhe['status'], emEnvio = false) {
+  if (status === 'pendente' && emEnvio) {
+    return 'Enviando...';
+  }
+  const rotulos: Record<EnvioDetalhe['status'], string> = {
+    pendente: 'Pendente',
+    enviado: 'Enviado',
+    falhou: 'Falhou',
+  };
+  return rotulos[status];
+}
+
+const enviosOrdenados = computed(() => {
+  if (!lote.value) {
+    return [];
+  }
+  return [...lote.value.envios].sort(
+    (a, b) =>
+      ordemStatus.indexOf(a.status) - ordemStatus.indexOf(b.status)
+  );
+});
+
+const primeiroPendente = computed(() =>
+  enviosOrdenados.value.findIndex(
+    (e: EnvioDetalhe) => e.status === 'pendente'
+  )
+);
+
+function formatoTempo(segundos: number) {
+  const mm = Math.floor(segundos / 60)
+    .toString()
+    .padStart(2, '0');
+  const ss = (segundos % 60).toString().padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
 const concluidoComFalhas = computed(
   () =>
     lote.value?.status === 'processado' &&
-    lote.value.envios.some((e) => e.status === 'falhou')
+    lote.value.envios.some((e: EnvioDetalhe) => e.status === 'falhou')
 );
 
 async function consultarLote(id: string) {
@@ -67,8 +116,13 @@ function iniciarAcompanhamento(id: string) {
   if (intervalo) {
     clearInterval(intervalo);
   }
+  inicioAcompanhamento.value = Date.now();
+  segundosDecorridos.value = 0;
   intervalo = setInterval(() => {
     consultarLote(id);
+    segundosDecorridos.value = Math.floor(
+      (Date.now() - inicioAcompanhamento.value) / 1000
+    );
   }, 4000);
 }
 
@@ -81,7 +135,7 @@ function pararAcompanhamento() {
 
 watch(
   () => lote.value?.status,
-  (status) => {
+  (status: LoteDetalhe['status'] | undefined) => {
     if (status && status !== 'processando') {
       pararAcompanhamento();
     }
@@ -94,10 +148,13 @@ function selecionarArquivo(evento: Event) {
   const alvo = evento.target as HTMLInputElement;
   arquivo.value = alvo.files?.[0] ?? null;
   lote.value = null;
+  if (arquivo.value) {
+    void analisarArquivo();
+  }
 }
 
 async function analisarArquivo() {
-  if (!arquivo.value) {
+  if (!arquivo.value || carregando.value) {
     return;
   }
   carregando.value = true;
@@ -160,13 +217,10 @@ async function enviar() {
       <div class="campo">
         <input type="file" accept=".csv" @change="selecionarArquivo" />
       </div>
-      <button
-        class="btn"
-        :disabled="!arquivo || carregando"
-        @click="analisarArquivo"
-      >
-        {{ carregando ? 'Analisando...' : 'Analisar arquivo' }}
-      </button>
+      <p v-if="carregando" class="dica">Analisando arquivo...</p>
+      <p v-else class="dica">
+        A análise do arquivo é iniciada automaticamente ao selecioná-lo.
+      </p>
     </section>
 
     <section v-else class="card">
@@ -231,21 +285,32 @@ async function enviar() {
 
     <section v-if="lote" class="card">
       <h2>3. Acompanhamento</h2>
-      <p v-if="processando" class="sucesso">
-        <template v-if="lote.totalEnvios">
-          {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
-          (restam {{ progresso.restantes }}) — pode levar alguns minutos.
-        </template>
-        <template v-else>
-          Separando as tarefas por pauta...
-        </template>
-      </p>
+
+      <div v-if="processando" class="progresso">
+        <div class="barra-progresso">
+          <div
+            class="barra-preenchimento"
+            :style="{ width: percentual + '%' }"
+          />
+        </div>
+        <p class="progresso-texto">
+          <template v-if="lote.totalEnvios">
+            {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
+            ({{ percentual }}%) · {{ formatoTempo(segundosDecorridos) }}
+          </template>
+          <template v-else>
+            Separando as tarefas por pauta... ·
+            {{ formatoTempo(segundosDecorridos) }}
+          </template>
+        </p>
+      </div>
+
       <p
         v-else-if="lote.status === 'processado' && !concluidoComFalhas"
         class="sucesso"
       >
         Envio concluído: {{ progresso.enviados }}/{{ progresso.total }}
-        e-mails enviados com sucesso.
+        e-mails enviados com sucesso · {{ formatoTempo(segundosDecorridos) }}.
       </p>
       <p v-else-if="concluidoComFalhas" class="erro">
         Envio concluído com falhas: {{ progresso.enviados }}/{{
@@ -256,6 +321,20 @@ async function enviar() {
       <p v-else-if="lote.status === 'falhou'" class="erro">
         Falha no processamento: {{ lote.erro }}
       </p>
+
+      <ul v-if="enviosOrdenados.length" class="lista-envios">
+        <li
+          v-for="(envio, indice) in enviosOrdenados"
+          :key="envio.id"
+          class="item-envio"
+        >
+          <span class="envio-nome">{{ envio.responsavel.nome }}</span>
+          <span class="estampa" :class="`estampa-${envio.status}`">
+            {{ rotuloStatus(envio.status, processando && indice === primeiroPendente) }}
+          </span>
+        </li>
+      </ul>
+
       <p v-if="!processando">
         <NuxtLink :to="`/lote/${lote.id}`">Ver detalhes do lote</NuxtLink>
       </p>
@@ -280,5 +359,71 @@ async function enviar() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+}
+
+.progresso {
+  margin-bottom: 1rem;
+}
+
+.barra-progresso {
+  height: 10px;
+  border-radius: 6px;
+  background: #e2e4e8;
+  overflow: hidden;
+}
+
+.barra-preenchimento {
+  height: 100%;
+  border-radius: 6px;
+  background: #2f7d32;
+  transition: width 0.5s ease;
+}
+
+.progresso-texto {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.lista-envios {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.item-envio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.envio-nome {
+  font-size: 0.9rem;
+}
+
+.estampa {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.estampa-enviado {
+  background: #e3f2e4;
+  color: #2f7d32;
+}
+
+.estampa-pendente {
+  background: #f1f2f4;
+  color: #666;
+}
+
+.estampa-falhou {
+  background: #fde8e8;
+  color: #b3261e;
 }
 </style>
