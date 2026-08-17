@@ -7,7 +7,7 @@ import type {
   LoteDetalhe,
 } from '~/types';
 
-definePageMeta({ middleware: 'auth' });
+definePageMeta({ title: 'Novo envio', middleware: 'auth' });
 
 const analise = ref<AnalisarResultado | null>(null);
 const lote = ref<LoteDetalhe | null>(null);

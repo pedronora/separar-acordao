@@ -5,9 +5,9 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 
-ARG NUXT_PUBLIC_API_BASE_URL=http://localhost:3001
-ENV NUXT_PUBLIC_API_BASE_URL=$NUXT_PUBLIC_API_BASE_URL
-RUN pnpm generate
+ARG API_PROXY_TARGET=http://backend:3001
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
+RUN pnpm build
 
 FROM node:20-alpine AS dev
 RUN npm install -g pnpm@9
@@ -17,7 +17,11 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 EXPOSE 3000
 
-FROM nginx:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.output ./.output
+EXPOSE 3000
+
+CMD ["node", ".output/server/index.mjs"]

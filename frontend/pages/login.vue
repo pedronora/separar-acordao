@@ -2,6 +2,8 @@
 import { useAuth } from '~/composables/useAuth';
 import { mensagemDeErro } from '~/composables/useApi';
 
+definePageMeta({ title: 'Login' });
+
 const { login } = useAuth();
 const router = useRouter();
 

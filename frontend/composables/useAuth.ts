@@ -1,49 +1,29 @@
+import { useApi } from '~/composables/useApi';
 import type { Usuario } from '~/types';
 
-const CHAVE_TOKEN = 'auth-token';
-const CHAVE_USUARIO = 'auth-usuario';
-
 export const useAuth = () => {
-  const token = useState<string | null>('auth-token', () => null);
-  const usuario = useState<Usuario | null>('auth-usuario', () => null);
-
-  if (import.meta.client && !token.value) {
-    token.value = localStorage.getItem(CHAVE_TOKEN);
-    const bruto = localStorage.getItem(CHAVE_USUARIO);
-    if (bruto) {
-      try {
-        usuario.value = JSON.parse(bruto) as Usuario;
-      } catch {
-        localStorage.removeItem(CHAVE_USUARIO);
-      }
-    }
-  }
+  const usuario = useCookie<Usuario | null>(CHAVE_USUARIO, {
+    default: () => null,
+    maxAge: CHAVE_SESSAO_MAX_AGE,
+    sameSite: 'lax',
+  });
 
   async function login(email: string, senha: string): Promise<void> {
-    const resultado = await $fetch<{ token: string; usuario: Usuario }>(
-      '/api/auth/login',
-      {
-        baseURL: apiBaseUrl(),
-        method: 'POST',
-        body: { email, senha },
-      }
-    );
-    token.value = resultado.token;
+    const resultado = await useApi<{ usuario: Usuario }>('/api/auth/login', {
+      method: 'POST',
+      body: { email, senha },
+    });
     usuario.value = resultado.usuario;
-    if (import.meta.client) {
-      localStorage.setItem(CHAVE_TOKEN, resultado.token);
-      localStorage.setItem(CHAVE_USUARIO, JSON.stringify(resultado.usuario));
-    }
   }
 
-  function logout(): void {
-    token.value = null;
+  async function logout(): Promise<void> {
+    try {
+      await useApi('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // segue para limpar o estado local mesmo se o backend não responder
+    }
     usuario.value = null;
-    if (import.meta.client) {
-      localStorage.removeItem(CHAVE_TOKEN);
-      localStorage.removeItem(CHAVE_USUARIO);
-    }
   }
 
-  return { token, usuario, login, logout };
+  return { usuario, login, logout };
 };

@@ -2,7 +2,7 @@
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import type { Configuracoes, Responsavel } from '~/types';
 
-definePageMeta({ middleware: 'auth' });
+definePageMeta({ title: 'Configurações', middleware: 'auth' });
 
 const config = ref<Configuracoes>({ emailPadraoResponsavelInativo: '' });
 const salvo = ref(false);

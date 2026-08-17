@@ -1,10 +1,12 @@
 export default defineNuxtConfig({
-  ssr: false,
+  ssr: true,
   devtools: { enabled: true },
   runtimeConfig: {
-    public: {
-      apiBaseUrl:
-        process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3001',
+    apiInternalUrl: process.env.API_INTERNAL_URL || 'http://localhost:3001',
+  },
+  routeRules: {
+    '/api/**': {
+      proxy: `${process.env.API_PROXY_TARGET || 'http://localhost:3001'}/api/**`,
     },
   },
   css: ['~/assets/css/main.css'],

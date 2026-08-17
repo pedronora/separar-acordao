@@ -3,7 +3,7 @@ const { usuario, logout } = useAuth();
 const router = useRouter();
 
 async function sair() {
-  logout();
+  await logout();
   await router.push('/login');
 }
 </script>
