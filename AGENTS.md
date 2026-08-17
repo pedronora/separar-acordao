@@ -34,8 +34,8 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 
 ```
 /
-├── frontend/          # Nuxt 3 (SSR) — UI
-├── backend/           # Nuxt 3 (modo server-only / Nitro) — API REST, auth, orquestração
+├── frontend/          # Nuxt 4 (SSR) — UI
+├── backend/           # Nuxt 4 (modo server-only / Nitro) — API REST, auth, orquestração
 ├── python-service/    # FastAPI — motor de separação de tarefas (baseado no notebook)
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
@@ -43,12 +43,12 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 ```
 
 **Por que essa divisão:**
-- **Frontend**: Nuxt 3 com **SSR** habilitado (`ssr: true`). Títulos, meta e
+- **Frontend**: Nuxt 4 com **SSR** habilitado (`ssr: true`). Títulos, meta e
   conteúdo das páginas são renderizados no servidor. Expõe um proxy em `/api/**`
   (routeRules) para o backend, então o navegador fala apenas com o frontend (mesma
   origem). No SSR, chamadas à API usam `API_INTERNAL_URL` via `useRequestFetch`
   (encaminha o cookie de sessão); no navegador, usam caminho relativo `/api/**`.
-- **Backend**: Nuxt 3 usado apenas como camada de servidor (Nitro), expondo rotas em `server/api/`. Responsável por autenticação, regras de negócio, acesso ao banco, envio de e-mail e por chamar o `python-service` via HTTP interno para a etapa de separação. A sessão é emitida como **cookie httpOnly** (`auth_token`) no login e validada via cookie ou `Authorization: Bearer` no middleware.
+- **Backend**: Nuxt 4 usado apenas como camada de servidor (Nitro), expondo rotas em `server/api/`. Responsável por autenticação, regras de negócio, acesso ao banco, envio de e-mail e por chamar o `python-service` via HTTP interno para a etapa de separação. A sessão é emitida como **cookie httpOnly** (`auth_token`) no login e validada via cookie ou `Authorization: Bearer` no middleware.
 - **python-service**: microsserviço Python isolado (FastAPI) que expõe um endpoint interno (ex.: `POST /separar`) implementando a lógica do notebook. Mantido separado do backend Node para não misturar runtimes e para permitir testar/evoluir o algoritmo isoladamente com os mesmos dados do notebook.
 - Comunicação entre backend e python-service é **interna à rede Docker**, nunca exposta publicamente.
 
