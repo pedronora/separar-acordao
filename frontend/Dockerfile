@@ -1,7 +1,7 @@
 FROM node:24-alpine AS build
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 
@@ -10,9 +10,9 @@ ENV API_PROXY_TARGET=$API_PROXY_TARGET
 RUN pnpm build
 
 FROM node:24-alpine AS dev
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 EXPOSE 3000
