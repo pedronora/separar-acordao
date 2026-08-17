@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatarData } from '../utils/format';
+import { formatarData } from '../app/utils/format';
 
 describe('formatarData', () => {
   it('retorna "-" para valores vazios', () => {
