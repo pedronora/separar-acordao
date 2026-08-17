@@ -7,12 +7,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const url = getRequestURL(event).pathname;
-  if (url.startsWith('/api/auth/login') || url.startsWith('/api/health')) {
+  if (
+    url.startsWith('/api/auth/login') ||
+    url.startsWith('/api/auth/logout') ||
+    url.startsWith('/api/health')
+  ) {
     return;
   }
 
   const cabecalho = getHeader(event, 'authorization');
-  const token = cabecalho?.startsWith('Bearer ') ? cabecalho.slice(7) : null;
+  const tokenDoCabecalho = cabecalho?.startsWith('Bearer ')
+    ? cabecalho.slice(7)
+    : null;
+  const tokenDoCookie = getCookie(event, 'auth_token');
+  const token = tokenDoCabecalho || tokenDoCookie;
   const payload = token ? verificarToken(token) : null;
   if (!payload) {
     throw createError({ statusCode: 401, message: 'Não autenticado.' });
