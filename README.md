@@ -38,8 +38,8 @@ referência (ver [Referência de negócio](#referência-de-negócio)).
 Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 
 ```
-frontend/         Nuxt 3 (SSR) — interface
-backend/          Nuxt 3 (server-only / Nitro) — API REST, auth, orquestração
+frontend/         Nuxt 4 (SSR) — interface
+backend/          Nuxt 4 (server-only / Nitro) — API REST, auth, orquestração
 python-service/   FastAPI — motor de separação de tarefas (baseado no notebook)
 ```
 
@@ -57,7 +57,7 @@ python-service/   FastAPI — motor de separação de tarefas (baseado no notebo
                                └───────────────┘         └─────────────┘   └───────────────┘
 ```
 
-- **frontend**: Nuxt 3 com **SSR** (Server-Side Rendering) — títulos, meta e
+- **frontend**: Nuxt 4 com **SSR** (Server-Side Rendering) — títulos, meta e
   conteúdo são renderizados no servidor. O frontend expõe um proxy em `/api/**`
   para o backend, então o navegador só fala com o frontend (mesma origem).
 - **backend**: camada de servidor (Nitro) com rotas em `server/api/`. Cuida de
@@ -72,8 +72,8 @@ python-service/   FastAPI — motor de separação de tarefas (baseado no notebo
 ## Estrutura do repositório
 
 ```
-├── frontend/              # Nuxt 3 (SSR)
-├── backend/               # Nuxt 3 (Nitro) — API REST
+├── frontend/              # Nuxt 4 (SSR)
+├── backend/               # Nuxt 4 (Nitro) — API REST
 │   ├── prisma/            # schema + migrations
 │   ├── server/api/        # rotas HTTP
 │   └── scripts/           # recuperação de lotes, seed
@@ -103,7 +103,7 @@ refatoração para Python de produção deve manter o mesmo resultado.
 ## Requisitos
 
 - **Docker** + **Docker Compose** (para subir tudo de uma vez), ou
-- **pnpm** (Node 20+) para frontend/backend e **uv** (ou pip) para o
+- **pnpm** (Node 24+) para frontend/backend e **uv** (ou pip) para o
   python-service, no desenvolvimento local.
 
 ---
