@@ -217,4 +217,4 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 
 ## Licença
 
-Privado — uso interno.
+Uso interno.
