@@ -19,11 +19,11 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/eslint-config": "^1.17.0",
-    "@types/node": "^26.2.0",
+    "@types/node": "^24.13.3",
     "eslint": "^10.8.1",
-    "prettier": "^3.4.2",
+    "prettier": "^3.9.6",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9",
-    "vue-tsc": "^3.3.9"
+    "vue-tsc": "^3.3.10"
   }
 }
