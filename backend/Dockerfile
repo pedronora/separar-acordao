@@ -24,6 +24,7 @@ COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/server/generated ./server/generated
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/package.json ./package.json
+RUN chown -R node:node /app/node_modules && mkdir -p /tmp/uploads /app/.pnpm-store && chown -R node:node /tmp/uploads /app/.pnpm-store
 EXPOSE 3001
 
 CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx scripts/recover-lotes.ts && npx tsx scripts/seed-if-empty.ts && node .output/server/index.mjs"]
