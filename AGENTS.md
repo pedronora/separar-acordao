@@ -34,7 +34,7 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 
 ```
 /
-├── frontend/          # Nuxt 3 (SPA) — UI
+├── frontend/          # Nuxt 3 (SSR) — UI
 ├── backend/           # Nuxt 3 (modo server-only / Nitro) — API REST, auth, orquestração
 ├── python-service/    # FastAPI — motor de separação de tarefas (baseado no notebook)
 ├── docker-compose.yml
@@ -43,8 +43,12 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 ```
 
 **Por que essa divisão:**
-- **Frontend**: Nuxt 3 em modo SPA, consumindo a API do backend via HTTP. Não faz SSR de dados sensíveis nem acessa o banco diretamente.
-- **Backend**: Nuxt 3 usado apenas como camada de servidor (Nitro), expondo rotas em `server/api/`. Responsável por autenticação, regras de negócio, acesso ao banco, envio de e-mail e por chamar o `python-service` via HTTP interno para a etapa de separação.
+- **Frontend**: Nuxt 3 com **SSR** habilitado (`ssr: true`). Títulos, meta e
+  conteúdo das páginas são renderizados no servidor. Expõe um proxy em `/api/**`
+  (routeRules) para o backend, então o navegador fala apenas com o frontend (mesma
+  origem). No SSR, chamadas à API usam `API_INTERNAL_URL` via `useRequestFetch`
+  (encaminha o cookie de sessão); no navegador, usam caminho relativo `/api/**`.
+- **Backend**: Nuxt 3 usado apenas como camada de servidor (Nitro), expondo rotas em `server/api/`. Responsável por autenticação, regras de negócio, acesso ao banco, envio de e-mail e por chamar o `python-service` via HTTP interno para a etapa de separação. A sessão é emitida como **cookie httpOnly** (`auth_token`) no login e validada via cookie ou `Authorization: Bearer` no middleware.
 - **python-service**: microsserviço Python isolado (FastAPI) que expõe um endpoint interno (ex.: `POST /separar`) implementando a lógica do notebook. Mantido separado do backend Node para não misturar runtimes e para permitir testar/evoluir o algoritmo isoladamente com os mesmos dados do notebook.
 - Comunicação entre backend e python-service é **interna à rede Docker**, nunca exposta publicamente.
 
@@ -61,7 +65,8 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 ### Autenticação
 - JWT (access token) para sessão da API.
 - Hash de senha com **argon2** (preferencial) ou **bcrypt** — nunca `md5`/`sha1` puro nem reversível.
-- Middleware de auth em todas as rotas do backend, exceto `/api/auth/login`.
+- Middleware de auth em todas as rotas do backend, exceto `/api/auth/login`, `/api/auth/logout` e `/api/health`.
+- Sessão: JWT emitido no login como **cookie httpOnly** (`auth_token`), também aceito via `Authorization: Bearer`.
 
 ### E-mail
 - Envio via SMTP configurável por variáveis de ambiente (ver seção 6), usando uma lib como `nodemailer` no backend.
@@ -215,7 +220,9 @@ PYTHON_SERVICE_URL=http://python-service:8000
 # (variáveis específicas do motor de separação, se houver)
 
 # frontend/.env
-NUXT_PUBLIC_API_BASE_URL=http://localhost:3001
+API_INTERNAL_URL=http://backend:3001
+API_PROXY_TARGET=http://backend:3001
+COOKIE_SECURE=false
 ```
 
 ---
@@ -225,7 +232,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:3001
 - `docker-compose.yml`: produção — serviços `frontend`, `backend`, `python-service`, `db` (Postgres), sem hot-reload, imagens multi-stage otimizadas.
 - `docker-compose.dev.yml`: desenvolvimento — volumes montados para hot-reload, mesma topologia de serviços.
 - Cada serviço deve ter seu próprio `Dockerfile` no respectivo diretório (`frontend/Dockerfile`, `backend/Dockerfile`, `python-service/Dockerfile`).
-- `python-service` e `backend` **não** devem expor portas publicamente em produção além do necessário — apenas `frontend` (ou um reverse proxy) fica exposto externamente; `backend` pode ficar exposto se o frontend for SPA consumindo API pública.
+- Apenas `frontend` fica exposto publicamente; `backend` e `python-service` são acessíveis apenas pela rede interna Docker (o frontend faz proxy de `/api/**` para o backend).
 
 ---
 
