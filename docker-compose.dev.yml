@@ -63,8 +63,6 @@ services:
     build:
       context: ./frontend
       target: dev
-      args:
-        NUXT_PUBLIC_API_BASE_URL: http://localhost:3001
     command: sh -c "pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0"
     volumes:
       - ./frontend:/app
@@ -72,7 +70,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NUXT_PUBLIC_API_BASE_URL: http://localhost:3001
+      API_INTERNAL_URL: http://backend:3001
+      API_PROXY_TARGET: http://backend:3001
       NODE_ENV: development
       CI: "true"
     depends_on:

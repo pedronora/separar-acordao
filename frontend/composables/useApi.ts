@@ -1,29 +1,35 @@
 import type { FetchError, FetchOptions } from 'ofetch';
 
-export function apiBaseUrl(): string {
-  return useRuntimeConfig().public.apiBaseUrl;
-}
-
 export async function useApi<T>(
   path: string,
   options: FetchOptions<'json'> = {}
 ): Promise<T> {
-  const { token, logout } = useAuth();
-  const headers = {
-    ...((options.headers as Record<string, string>) ?? {}),
-    ...(token.value ? { authorization: `Bearer ${token.value}` } : {}),
-  };
+  const noServidor = import.meta.server;
+  const baseURL = noServidor ? useRuntimeConfig().apiInternalUrl : undefined;
+  const fetchFn = noServidor ? useRequestFetch() : $fetch;
+
   try {
-    return await $fetch<T>(path, {
-      baseURL: apiBaseUrl(),
+    return await fetchFn<T>(path, {
       ...options,
-      headers,
+      baseURL,
     } as Parameters<typeof $fetch<T>>[1]);
   } catch (erro) {
     const fetchErro = erro as FetchError;
-    if (fetchErro?.statusCode === 401 && token.value) {
-      logout();
-      await navigateTo('/login');
+    if (fetchErro?.statusCode === 401) {
+      const cookie = useCookie<unknown>(CHAVE_USUARIO, {
+        default: () => null,
+        maxAge: CHAVE_SESSAO_MAX_AGE,
+        sameSite: 'lax',
+      });
+      if (cookie.value) {
+        try {
+          await fetchFn('/api/auth/logout', { method: 'POST', baseURL });
+        } catch {
+          // segue mesmo se o logout remoto falhar
+        }
+        cookie.value = null;
+        await navigateTo('/login');
+      }
     }
     throw erro;
   }

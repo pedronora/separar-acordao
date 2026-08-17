@@ -3,7 +3,7 @@ import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
 import type { LoteResumo } from '~/types';
 
-definePageMeta({ middleware: 'auth' });
+definePageMeta({ title: 'Histórico', middleware: 'auth' });
 
 const lotes = ref<LoteResumo[]>([]);
 const carregando = ref(false);

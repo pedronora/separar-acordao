@@ -3,7 +3,7 @@ import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
 import type { EnvioDetalhe, LoteDetalhe } from '~/types';
 
-definePageMeta({ middleware: 'auth' });
+definePageMeta({ title: 'Detalhes do lote', middleware: 'auth' });
 
 const route = useRoute();
 const lote = ref<LoteDetalhe | null>(null);

@@ -1,5 +1,7 @@
 import argon2 from 'argon2';
 
+import { config } from '../../utils/config';
+
 export default defineEventHandler(async (event) => {
   const corpo = await readBody(event);
   const email =
@@ -33,6 +35,14 @@ export default defineEventHandler(async (event) => {
     sub: usuario.id,
     email: usuario.email,
     nome: usuario.nome,
+  });
+
+  setCookie(event, 'auth_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: config.authCookieSecure,
+    path: '/',
+    maxAge: config.authCookieMaxAge,
   });
 
   return {

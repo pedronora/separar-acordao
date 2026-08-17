@@ -38,27 +38,28 @@ referência (ver [Referência de negócio](#referência-de-negócio)).
 Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 
 ```
-frontend/         Nuxt 3 (SPA) — interface
+frontend/         Nuxt 3 (SSR) — interface
 backend/          Nuxt 3 (server-only / Nitro) — API REST, auth, orquestração
 python-service/   FastAPI — motor de separação de tarefas (baseado no notebook)
 ```
 
 ```
-                 ┌──────────────┐   HTTP (interna)   ┌─────────────────┐
-  Browser  ───►  │   frontend   │  ───────────────►  │    backend      │
-                 │   Nuxt SPA   │                    │  Nitro (API)    │
-                 └──────────────┘                    └────────┬────────┘
-                                                              │
-                                      ┌───────────────────────┼───────────────────┐
-                                      │                       │                   │
-                              ┌───────▼───────┐        ┌──────▼──────┐    ┌──────▼────────┐
-                              │ python-service│        │   db         │    │ SMTP          │
-                              │  FastAPI      │        │  PostgreSQL  │    │ (e-mail)      │
-                              └───────────────┘        └─────────────┘    └───────────────┘
+                 ┌──────────────┐   proxy /api (Nitro)  ┌─────────────────┐
+  Browser  ───►  │   frontend   │  ───────────────────► │    backend      │
+                 │   Nuxt SSR   │                       │  Nitro (API)    │
+                 └──────────────┘                       └────────┬────────┘
+                                                                │
+                                       ┌────────────────────────┼──────────────────┐
+                                       │                        │                  │
+                               ┌───────▼───────┐         ┌──────▼──────┐   ┌──────▼────────┐
+                               │ python-service│         │   db         │   │ SMTP          │
+                               │  FastAPI      │         │  PostgreSQL  │   │ (e-mail)      │
+                               └───────────────┘         └─────────────┘   └───────────────┘
 ```
 
-- **frontend**: SPA consumindo a API do backend via HTTP — não acessa o banco
-  diretamente.
+- **frontend**: Nuxt 3 com **SSR** (Server-Side Rendering) — títulos, meta e
+  conteúdo são renderizados no servidor. O frontend expõe um proxy em `/api/**`
+  para o backend, então o navegador só fala com o frontend (mesma origem).
 - **backend**: camada de servidor (Nitro) com rotas em `server/api/`. Cuida de
   autenticação, regras de negócio, acesso ao banco, envio de e-mail e da chamada
   ao `python-service` via rede Docker interna.
@@ -71,7 +72,7 @@ python-service/   FastAPI — motor de separação de tarefas (baseado no notebo
 ## Estrutura do repositório
 
 ```
-├── frontend/              # Nuxt 3 (SPA)
+├── frontend/              # Nuxt 3 (SSR)
 ├── backend/               # Nuxt 3 (Nitro) — API REST
 │   ├── prisma/            # schema + migrations
 │   ├── server/api/        # rotas HTTP
@@ -115,8 +116,9 @@ refatoração para Python de produção deve manter o mesmo resultado.
 docker compose up --build -d
 ```
 
-- Frontend: http://localhost:3000
-- Backend (API): http://localhost:3001
+- Frontend (SSR): http://localhost:3000
+- A API do backend não fica exposta publicamente — o frontend faz proxy de
+  `/api/**` para o backend via rede interna.
 
 ### Desenvolvimento (Docker, hot-reload)
 
@@ -165,7 +167,9 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 
 | Variável | Descrição |
 | --- | --- |
-| `NUXT_PUBLIC_API_BASE_URL` | Base URL da API (ex.: `http://localhost:3001`) |
+| `API_INTERNAL_URL` | URL da API usada pelo servidor Nitro no SSR (ex.: `http://backend:3001` em Docker) |
+| `API_PROXY_TARGET` | Alvo do proxy `/api` do Nitro (baked no build) |
+| `COOKIE_SECURE` | Define `Secure` no cookie de sessão (`true` apenas sob HTTPS) |
 
 > Segredos nunca são commitados — crie os `.env` a partir das orientações acima.
 
@@ -199,12 +203,14 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 
 - Senhas armazenadas com **hash** (argon2/bcrypt) — nunca texto plano nem
   criptografia reversível.
-- Rotas do backend protegidas por **JWT**, exceto login.
+- Rotas do backend protegidas por **JWT** (cookie httpOnly + Bearer), exceto
+  login/logout/health.
 - Validação de responsáveis não cadastrados ocorre **antes** de qualquer envio
   do lote (sem envios parciais silenciosos).
 - Arquivos enviados são validados (tipo, tamanho, conteúdo) antes de repassar ao
   python-service.
-- CORS restrito à origem do frontend.
+- Backend não fica exposto publicamente — acesso apenas via proxy do frontend
+  (mesma origem).
 - Comunicação backend ↔ python-service é interna à rede Docker.
 
 ---
