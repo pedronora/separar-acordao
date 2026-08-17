@@ -14,6 +14,7 @@ RUN npm install -g pnpm@11
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
+RUN chown -R node:node /app/node_modules && mkdir -p /app/.pnpm-store && chown -R node:node /app/.pnpm-store
 COPY . .
 EXPOSE 3000
 

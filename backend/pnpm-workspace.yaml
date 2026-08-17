@@ -4,3 +4,6 @@ allowBuilds:
   prisma: true
   '@prisma/engines': true
   unrs-resolver: true
+peerDependencyRules:
+  allowedVersions:
+    '@bomb.sh/tab>cac': '7.0.0'
