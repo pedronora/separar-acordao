@@ -1,4 +1,9 @@
 import {
+  agruparTarefas,
+  montarAssunto,
+  type TarefaEmail,
+} from '../../../utils/email';
+import {
   emailDestino,
   obterEmailPadraoInativo,
 } from '../../../utils/configuracoes';
@@ -54,7 +59,8 @@ export default defineEventHandler(async (event) => {
 
   for (const envio of selecionados) {
     const tarefas = envio.tarefas as TarefaEmail[];
-    const html = montarHtml(envio.responsavel.nome, tarefas);
+    const tabelas = agruparTarefas(tarefas);
+    const html = montarHtml(envio.responsavel.nome, tabelas);
     const assunto = montarAssunto(orgao, dataSessao, envio.responsavel.nome);
     const para = emailDestino(envio.responsavel, emailPadraoInativo);
 
