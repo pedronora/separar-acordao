@@ -41,6 +41,7 @@ model LoteEnvio {
   status       LoteStatus @default(processando)
   erro         String?
   totalEnvios  Int?     @map("total_envios")
+  arquivos     Json?    @map("arquivos")
   envios       Envio[]
 
   @@map("lotes_envio")

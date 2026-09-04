@@ -18,6 +18,24 @@ export interface TarefaSeparacao {
   classe: string;
   processo: string;
   pauta: string;
+  etiqueta?: string;
+}
+
+export interface ArquivoAnalise {
+  token: string;
+  arquivoOrigem: string;
+  etiqueta: string;
+  desdes: string[];
+  responsaveis: string[];
+  totalAcordaos: number;
+}
+
+export interface ArquivoEnvio {
+  token: string;
+  arquivoOrigem: string;
+  etiqueta: string;
+  pautas: Record<string, string>;
+  totalAcordaos?: number;
 }
 
 export interface AnalisarResultado {
@@ -40,6 +58,7 @@ export interface Configuracoes {
 export interface LoteResumo {
   id: string;
   arquivoOrigem: string;
+  etiquetas: string;
   orgao: string | null;
   dataSessao: string | null;
   criadoEm: string;
@@ -70,6 +89,13 @@ export interface EnvioDetalhe {
 export interface LoteDetalhe {
   id: string;
   arquivoOrigem: string;
+  arquivos: {
+    token: string;
+    arquivoOrigem: string;
+    etiqueta: string;
+    pautas: Record<string, string>;
+    totalAcordaos?: number;
+  }[] | null;
   orgao: string | null;
   dataSessao: string | null;
   criadoEm: string;

@@ -6,6 +6,7 @@ import { config } from './config';
 export interface TarefaEmail {
   autos: string;
   pauta: string;
+  etiqueta?: string;
 }
 
 export function escaparHtml(texto: string): string {
@@ -33,15 +34,28 @@ export function montarLinhas(tarefas: TarefaEmail[]): string {
     .join('\n');
 }
 
-export function montarHtml(
-  responsavel: string,
+export function agruparTarefas(
+  tarefas: TarefaEmail[]
+): Map<string, TarefaEmail[]> {
+  const mapa = new Map<string, TarefaEmail[]>();
+  for (const tarefa of tarefas) {
+    const chave = tarefa.etiqueta ?? '';
+    const lista = mapa.get(chave);
+    if (lista) {
+      lista.push(tarefa);
+    } else {
+      mapa.set(chave, [tarefa]);
+    }
+  }
+  return mapa;
+}
+
+export function montarTabela(
   tarefas: TarefaEmail[]
 ): string {
   const cabecalho =
     'padding: 10px; text-align: center; border: 1px solid #dddddd; background-color: #f2f2f2; color: black;';
   return `
-    <div style="text-align: center;">
-        <div style="display: inline-block; text-align: left; width: 100%; max-width: 600px; margin-bottom: 5px;">Responsável: <strong>${escaparHtml(responsavel)}</strong></div>
         <table style="width: 100%; max-width: 600px; border-collapse: collapse; margin: 0 auto;">
             <thead>
                 <tr>
@@ -54,6 +68,30 @@ export function montarHtml(
 ${montarLinhas(tarefas)}
             </tbody>
         </table>
+    `;
+}
+
+export function montarHtml(
+  responsavel: string,
+  tabelas: Map<string, TarefaEmail[]>
+): string {
+  const partes: string[] = [];
+  const estiloEtiqueta =
+    'margin: 8px auto; max-width: 600px; font-weight: 600; font-size: 0.95em;';
+
+  for (const [etiqueta, tarefas] of tabelas) {
+    if (etiqueta) {
+      partes.push(
+        `<div style="${estiloEtiqueta}">${escaparHtml(etiqueta)}</div>`
+      );
+    }
+    partes.push(montarTabela(tarefas));
+  }
+
+  return `
+    <div style="text-align: center;">
+        <div style="display: inline-block; text-align: left; width: 100%; max-width: 600px; margin-bottom: 5px;">Responsável: <strong>${escaparHtml(responsavel)}</strong></div>
+${partes.join('\n')}
     </div>
     `;
 }
