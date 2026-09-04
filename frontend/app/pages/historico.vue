@@ -45,7 +45,17 @@ await listar();
           </tr>
         </thead>
         <tbody>
-          <tr v-for="lote in lotes" :key="lote.id">
+          <tr
+            v-for="lote in lotes"
+            :key="lote.id"
+            :class="{
+              'linha-confirmada':
+                lote.confirmados > 0 &&
+                lote.confirmados === lote.totalEnvios,
+            }"
+            style="cursor: pointer"
+            @click="$router.push(`/lote/${lote.id}`)"
+          >
             <td>{{ formatarData(lote.criadoEm) }}</td>
             <td>
               {{ lote.orgao || '-' }} /

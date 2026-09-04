@@ -13,11 +13,15 @@ referência (ver [Referência de negócio](#referência-de-negócio)).
 
 ## Funcionalidades
 
-- **Upload de arquivo** com as tarefas (com validação de tipo/tamanho/conteúdo).
+- **Upload de múltiplos arquivos** CSV com etiquetas (validação de
+  tipo/tamanho/conteúdo).
 - **Separação automática por pauta** — motor Python baseado no notebook de
   referência.
-- **Envio ordenado por e-mail** — tarefas de um mesmo responsável são agrupadas
-  em um único envio.
+- **Envio ordenado por e-mail** — tarefas de todos os arquivos de um mesmo
+  responsável são agrupadas em um único envio, com uma tabela por etiqueta.
+- **Confirmação de responsáveis** — checkbox na tabela de envios para assinalar
+  quais responsáveis já confirmaram conclusão; quando todos confirmam, a linha
+  do lote fica com fundo verde no histórico.
 - **Histórico de envios** — o quê foi enviado, para quem, quando e por qual
   usuário do sistema.
 - **Reenvio** de um envio específico (todo ou parcial) a partir do histórico.
@@ -160,6 +164,8 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 | `SMTP_HOST` / `SMTP_PORT` | Servidor SMTP |
 | `SMTP_USER` / `SMTP_PASSWORD` | Credenciais SMTP |
 | `SMTP_FROM` | Remetente dos e-mails |
+| `SMTP_FROM_NAME` | Nome de exibição do remetente (ex.: "Gab. Des. Fulano") |
+| `SMTP_REPLY_TO` | Endereço de resposta (ex.: `gdhbl@trt12.jus.br`) |
 | `PYTHON_SERVICE_URL` | URL interna do python-service (ex.: `http://python-service:8000`) |
 | `CORS_ORIGIN` | Origem permitida no CORS (ex.: `http://localhost:3000`) |
 
@@ -195,6 +201,10 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 - **PostgreSQL**, gerenciado via **Prisma ORM** (migrations com Prisma Migrate).
 - Entidades: `usuarios`, `responsaveis`, `lotes_envio`, `envios`,
   `configuracoes`.
+  - `lotes_envio` guarda os metadados dos múltiplos arquivos em `arquivos`
+    (JSON), além de `arquivo_origem` para compatibilidade com lotes legados.
+  - `envios` registra a confirmação de conclusão do responsável em `confirmado`
+    (boolean) e `confirmado_em` (timestamp).
 - Nunca alterar o schema manualmente em produção — sempre via migrations.
 
 ---

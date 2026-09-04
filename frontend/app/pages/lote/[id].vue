@@ -142,6 +142,30 @@ function fecharVisualizacao() {
   envioVisualizado.value = null;
 }
 
+async function alternarConfirmacao(envio: EnvioDetalhe) {
+  if (!lote.value) {
+    return;
+  }
+  try {
+    await useApi<{ atualizados: number }>(
+      `/api/lotes/${lote.value.id}/confirmar`,
+      {
+        method: 'POST',
+        body: {
+          envioIds: [envio.id],
+          confirmado: !envio.confirmado,
+        },
+      }
+    );
+    envio.confirmado = !envio.confirmado;
+    envio.confirmadoEm = envio.confirmado
+      ? new Date().toISOString()
+      : null;
+  } catch (erro) {
+    erroMsg.value = mensagemDeErro(erro);
+  }
+}
+
 await carregar();
 </script>
 
@@ -237,6 +261,7 @@ await carregar();
               <th>Responsável</th>
               <th>Tarefas</th>
               <th>Status</th>
+              <th>OK?</th>
               <th>Enviado em</th>
               <th>Reenvio de</th>
             </tr>
@@ -272,6 +297,13 @@ await carregar();
                 >
                   {{ envio.status }}
                 </span>
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="envio.confirmado"
+                  @change="alternarConfirmacao(envio)"
+                />
               </td>
               <td>{{ formatarData(envio.enviadoEm) }}</td>
               <td>
