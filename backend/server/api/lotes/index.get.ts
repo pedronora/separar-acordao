@@ -31,7 +31,9 @@ export default defineEventHandler(async (event) => {
     orderBy: { criadoEm: 'desc' },
     include: {
       usuario: { select: { nome: true } },
-      envios: { select: { status: true } },
+      envios: {
+        select: { status: true, confirmado: true },
+      },
     },
   });
   return lotes.map((lote) => ({
@@ -52,6 +54,9 @@ export default defineEventHandler(async (event) => {
     ).length,
     falhas: lote.envios.filter(
       (e) => e.status === 'falhou'
+    ).length,
+    confirmados: lote.envios.filter(
+      (e) => e.confirmado
     ).length,
   }));
 });

@@ -68,6 +68,7 @@ export interface LoteResumo {
   totalEnvios: number;
   enviados: number;
   falhas: number;
+  confirmados: number;
 }
 
 export interface EnvioDetalhe {
@@ -78,6 +79,8 @@ export interface EnvioDetalhe {
   corpoHtml: string | null;
   enviadoEm: string | null;
   reenviadoDe: string | null;
+  confirmado: boolean;
+  confirmadoEm: string | null;
   tarefas: TarefaSeparacao[];
   responsavel: {
     id: string;
