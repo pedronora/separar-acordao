@@ -13,9 +13,10 @@ A lógica de separação/agrupamento das tarefas **deve seguir a proposta de sol
 > **Nota para o agente:** o notebook deve estar versionado em `python-service/reference/Separar_acórdãos_para_formatar.ipynb`. Se ele ainda não estiver no repositório, pare e peça ao usuário para adicioná-lo antes de implementar a lógica de separação — não deduza o algoritmo sem consultá-lo.
 
 ### Funcionalidades principais
-- Upload de arquivo com as tarefas.
+- Upload de **múltiplos arquivos** CSV com etiquetas (cada arquivo gera sua própria tabela no e-mail do responsável).
 - Separação automática das tarefas por pauta (motor Python, baseado no notebook de referência).
-- Envio ordenado por e-mail para cada responsável, agrupando as tarefas daquele responsável em um único envio.
+- Envio ordenado por e-mail para cada responsável, agrupando as tarefas de todos os arquivos daquele responsável em um único envio (uma tabela por etiqueta).
+- **Confirmação de responsáveis:** checkbox na tabela de envios do lote para assinalar quais responsáveis já confirmaram conclusão. Quando todos confirmam, a linha do lote aparece com fundo verde no histórico.
 - Histórico de envios: o quê foi enviado, para quem, quando e por qual usuário do sistema.
 - Reenvio de um envio específico (todo ou parcial) a partir do histórico.
 - Cadastro/edição de responsáveis (nome, e-mail, e demais metadados necessários para casar com a pauta).
@@ -57,8 +58,8 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 - Entidades mínimas esperadas:
   - `usuarios` (login do sistema): id, email, senha_hash, nome, criado_em.
   - `responsaveis` (destinatários pré-cadastrados): id, nome, email, ativo, criado_em, atualizado_em.
-  - `lotes_envio` (um processamento de arquivo): id, arquivo_origem, usuario_id (quem processou), criado_em, status.
-  - `envios` (um e-mail para um responsável dentro de um lote): id, lote_id, responsavel_id, tarefas (JSON ou tabela relacionada), enviado_em, reenviado_de (nullable, self-reference), status (`pendente`, `enviado`, `falhou`).
+  - `lotes_envio` (um processamento de arquivo): id, arquivo_origem, usuario_id (quem processou), criado_em, status, arquivos (JSON — metadados de cada arquivo: token, arquivoOrigem, etiqueta, pautas).
+  - `envios` (um e-mail para um responsável dentro de um lote): id, lote_id, responsavel_id, tarefas (JSON), enviado_em, reenviado_de (nullable, self-reference), status (`pendente`, `enviado`, `falhou`), confirmado (boolean — responsável confirmou conclusão), confirmado_em (timestamp).
   - `configuracoes` (chave-valor, editável pela interface): chave, valor, atualizado_em. Chave usada: `email_padrao_responsavel_inativo` (e-mail padrão para envios de responsáveis inativos).
 - Migrations gerenciadas via Prisma Migrate — nunca alterar o schema do banco manualmente em produção.
 
@@ -71,6 +72,7 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 ### E-mail
 - Envio via SMTP configurável por variáveis de ambiente (ver seção 6), usando uma lib como `nodemailer` no backend.
 - Cada envio deve ser registrado em `envios` **antes ou imediatamente após** o disparo, com o resultado (sucesso/falha), para garantir rastreabilidade mesmo em caso de erro parcial.
+- **Não usar cópia oculta (BCC):** a conferência de conclusão é feita pela própria ferramenta (checkbox de confirmação de responsáveis), não por cópia de e-mail.
 
 ---
 
@@ -214,6 +216,8 @@ SMTP_PORT=
 SMTP_USER=
 SMTP_PASSWORD=
 SMTP_FROM=
+SMTP_FROM_NAME=            # nome de exibição do remetente (ex.: "Gab. Des. Fulano")
+SMTP_REPLY_TO=             # endereço de resposta (ex.: gdhbl@trt12.jus.br)
 PYTHON_SERVICE_URL=http://python-service:8000
 
 # python-service/.env
@@ -236,7 +240,20 @@ COOKIE_SECURE=false
 
 ---
 
-## 8. O que o agente deve sempre verificar antes de abrir um PR / finalizar uma tarefa
+## 8. Skills e diretrizes comportamentais
+
+Ao intervir no projeto, a IA deve seguir a skill **`karpathy-guidelines`** (carregada na sessão de trabalho). Seus princípios-chave, que direcionam toda alteração de código:
+
+1. **Pensar antes de codar** — não assumir; explicitar suposições; apresentar tradeoffs; parar e perguntar quando algo estiver ambíguo.
+2. **Simplicidade primeiro** — o mínimo de código que resolve o problema; nada especulativo, sem abstrações para uso único.
+3. **Mudanças cirúrgicas** — tocar apenas o necessário; não "melhorar" código adjacente; seguir o estilo já existente; remover apenas o que as próprias mudanças tornaram órfão.
+4. **Execução orientada a objetivos** — transformar tarefas em metas verificáveis (ex.: escrever teste que reproduz o problema e fazê-lo passar) e iterar até comprovar.
+
+Cada linha alterada deve rastrear diretamente para a solicitação do usuário.
+
+---
+
+## 9. O que o agente deve sempre verificar antes de abrir um PR / finalizar uma tarefa
 
 1. Lint (`pnpm lint` / `ruff check .`) sem erros nos componentes tocados.
 2. Formatação aplicada (`pnpm format` / `ruff format .`).
