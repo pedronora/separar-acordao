@@ -133,7 +133,6 @@ export async function enviarEmail(opts: {
     from: `"${config.smtpFromName}" <${config.smtpFrom}>`,
     replyTo: config.smtpReplyTo,
     to: opts.to,
-    bcc: config.smtpFrom,
     subject: opts.subject,
     html: opts.html,
     headers: {
