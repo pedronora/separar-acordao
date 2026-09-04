@@ -13,6 +13,37 @@ const erroMsg = ref('');
 const sucessoMsg = ref('');
 const envioVisualizado = ref<EnvioDetalhe | null>(null);
 
+const arquivosLote = computed(() => {
+  if (!lote.value) {
+    return '';
+  }
+  if (
+    lote.value.arquivos &&
+    lote.value.arquivos.length > 0
+  ) {
+    return lote.value.arquivos
+      .map((a) => a.arquivoOrigem)
+      .join(', ');
+  }
+  return lote.value.arquivoOrigem;
+});
+
+const etiquetasLote = computed(() => {
+  if (!lote.value) {
+    return '';
+  }
+  if (
+    lote.value.arquivos &&
+    lote.value.arquivos.length > 0
+  ) {
+    return lote.value.arquivos
+      .map((a) => a.etiqueta)
+      .filter((e) => e)
+      .join(', ');
+  }
+  return lote.value.arquivoOrigem;
+});
+
 const progresso = computed(() => {
   if (!lote.value) {
     return { enviados: 0, total: 0, restantes: 0 };
@@ -62,6 +93,12 @@ watch(
 
 onUnmounted(pararAcompanhamento);
 
+onMounted(() => {
+  if (lote.value?.status === 'processando') {
+    iniciarAcompanhamento();
+  }
+});
+
 function alternarSelecao(id: string) {
   const indice = selecionados.value.indexOf(id);
   if (indice >= 0) {
@@ -89,13 +126,7 @@ async function reenviar(envioIds?: string[]) {
     });
     sucessoMsg.value = `Reenvio concluído: ${resultado.enviados}/${resultado.total} e-mails.`;
     selecionados.value = [];
-await carregar();
-
-onMounted(() => {
-  if (lote.value?.status === 'processando') {
-    iniciarAcompanhamento();
-  }
-});
+    await carregar();
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
   } finally {
@@ -130,8 +161,12 @@ await carregar();
       <section class="card">
         <dl class="detalhes">
           <div>
-            <dt>Arquivo</dt>
-            <dd>{{ lote.arquivoOrigem }}</dd>
+            <dt>Arquivo(s)</dt>
+            <dd>{{ arquivosLote }}</dd>
+          </div>
+          <div>
+            <dt>Etiqueta(s)</dt>
+            <dd>{{ etiquetasLote }}</dd>
           </div>
           <div>
             <dt>Órgão</dt>

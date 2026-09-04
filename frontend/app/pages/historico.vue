@@ -38,7 +38,7 @@ await listar();
           <tr>
             <th>Data</th>
             <th>Órgão / Sessão</th>
-            <th>Arquivo</th>
+            <th>Etiqueta(s)</th>
             <th>Enviados</th>
             <th>Status</th>
             <th>Usuário</th>
@@ -51,11 +51,7 @@ await listar();
               {{ lote.orgao || '-' }} /
               {{ lote.dataSessao || '-' }}
             </td>
-            <td>
-              <NuxtLink :to="`/lote/${lote.id}`">
-                {{ lote.arquivoOrigem }}
-              </NuxtLink>
-            </td>
+            <td>{{ lote.etiquetas }}</td>
             <td>
               {{ lote.enviados }}/{{ lote.totalEnvios }}
               <span v-if="lote.falhas">({{ lote.falhas }} falhas)</span>
