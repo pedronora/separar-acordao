@@ -117,7 +117,10 @@ def analisar(conteudo: bytes, total_acordaos: int | None = None) -> dict:
             f'{total_acordaos}.'
         )
 
-    desdes = list(df_acordao['Desde'].astype(str).unique())
+    desdes = sorted(
+        df_acordao['Desde'].astype(str).unique(),
+        key=lambda valor: pd.to_datetime(valor, dayfirst=True),
+    )
     responsaveis = sorted(
         {str(nome).strip() for nome in df_acordao['Responsável'].unique()}
     )
