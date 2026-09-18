@@ -187,9 +187,22 @@ cd backend && pnpm build
   ```
 - Type hints obrigatórios em funções públicas do serviço (FastAPI se beneficia disso para validação via Pydantic).
 
+### Git workflow (GitHub Flow + main protegido)
+
+O projeto segue **GitHub Flow** com **`main` protegido** e fluxo de **Pull Request**:
+
+- `main` é **protegido** — sem commits/pushes diretos. Todo o trabalho acontece em branches de curta duração e entra via **Pull Request** (idealmente com revisão). Vincular o PR à issue relacionada, quando houver.
+- PRs precisam passar em `lint`, `test` e `build` antes do merge.
+- **CI:** `.github/workflows/ci.yml` roda os jobs dos três serviços em PRs e em pushes para `main`: `frontend` e `backend` com `pnpm lint` + `pnpm test` + `pnpm build`, e `python-service` com `ruff check` + `ruff format --check` + `pytest`. Falha em qualquer etapa bloqueia o merge.
+- Fluxo de merge: branch de feature → PR (#n) → CI passa → merge em `main`.
+
 ### Commits e branches
 - Branches: `feature/<descrição-curta>`, `fix/<descrição-curta>`, `chore/<descrição-curta>`.
-- Commits no padrão **Conventional Commits** (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`).
+- Cada branch deve corresponder a um **escopo de trabalho bem definido**. Se surgirem alterações não relacionadas durante o desenvolvimento, crie uma **nova branch** com seus próprios commits para tratá-las separadamente.
+- Cada commit deve conter um conjunto **coeso** de alterações com um único propósito (uma feature, um bugfix, um refactor) — não misturar alterações não relacionadas em um mesmo commit.
+- Antes de commitar, verifique se as alterações staged pertencem ao mesmo contexto lógico. Se não, separe-as em commits distintos (`git add -p` ajuda na preparação granular).
+- Mensagens de commit devem refletir o **"porquê"** da alteração, não apenas o **"o quê"**.
+- Mensagens de commit seguem **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`; escopo opcional, ex.: `feat(contato): ...`).
 - Nunca commitar `.env`, chaves, senhas ou dumps de banco.
 
 ---
