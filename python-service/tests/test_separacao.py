@@ -9,6 +9,7 @@ import pytest
 
 from app.separacao import (
     ErroDeSeparacao,
+    analisar,
     aplicar_pautas,
     filtrar_acordaos,
     ler_csv,
@@ -73,6 +74,20 @@ def test_responsaveis_faltantes() -> None:
     df = filtrar_acordaos(_df())
     assert responsaveis_faltantes(df, ['ANA']) == ['BRUNO']
     assert responsaveis_faltantes(df, ['ana']) == ['BRUNO']
+
+
+def test_analisar_desdes_em_ordem_cronologica() -> None:
+    csv = """Classe,Processo,Tarefa,Desde,Responsável
+AP,0000001-11.2026,Assinar acórdão,17/09/2026 18:16,ANA
+AP,0000002-22.2026,Assinar acórdão,17/09/2026 18:15,ANA
+AP,0000003-33.2026,Assinar acórdão,17/09/2026 18:43,ANA
+"""
+    resultado = analisar(csv.encode('utf-8'))
+    assert resultado['desdes'] == [
+        '17/09/2026 18:15',
+        '17/09/2026 18:16',
+        '17/09/2026 18:43',
+    ]
 
 
 def test_agrupamento_por_responsavel_ordenado() -> None:
