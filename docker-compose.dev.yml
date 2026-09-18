@@ -1,3 +1,5 @@
+name: separar-acordao-dev
+
 services:
   db:
     image: postgres:18-alpine
@@ -8,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql
+      - pgdata_dev:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
       interval: 5s
@@ -85,7 +87,7 @@ services:
       - backend
 
 volumes:
-  pgdata:
+  pgdata_dev:
   uploads:
   backend_node_modules:
   frontend_node_modules:
