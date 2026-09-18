@@ -35,7 +35,7 @@ def test_analisar_ok() -> None:
     assert resp.status_code == 200
     corpo = resp.json()
     assert corpo['total_acordaos'] == 2
-    assert corpo['desdes'] == ['06/08/2026 22:21', '06/08/2026 14:05']
+    assert corpo['desdes'] == ['06/08/2026 14:05', '06/08/2026 22:21']
     assert corpo['responsaveis'] == ['ANA', 'BRUNO']
 
 
