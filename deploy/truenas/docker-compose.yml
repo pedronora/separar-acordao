@@ -1,0 +1,81 @@
+# Custom App para TrueNAS SCALE (Apps > Discover > Install via YAML).
+#
+# Este arquivo e um TEMPLATE: substitua todos os valores REPLACE_* pelos
+# valores reais (use o .env da raiz como referencia) antes de colar no
+# TrueNAS. Nunca commite o arquivo preenchido.
+#
+# Pre-requisitos no NAS (ver deploy/truenas/ comandos no AGENTS/PR):
+#   mkdir -p /mnt/hdd-pool/separar-acordao/{pgdata,uploads}
+#   docker load -i /mnt/hdd-pool/separar-acordao/images.tar.gz
+#   banco restaurado em /mnt/hdd-pool/separar-acordao/pgdata (pg_restore)
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: REPLACE_POSTGRES_PASSWORD
+      POSTGRES_DB: app
+    volumes:
+      - /mnt/hdd-pool/separar-acordao/pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  python-service:
+    image: separar-acordao-python-service:latest
+    restart: unless-stopped
+    environment:
+      MAX_FILE_SIZE_BYTES: "10485760"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: separar-acordao-backend:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      python-service:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://app:REPLACE_POSTGRES_PASSWORD@db:5432/app
+      PORT: "3001"
+      JWT_SECRET: REPLACE_JWT_SECRET
+      SMTP_HOST: REPLACE_SMTP_HOST
+      SMTP_PORT: REPLACE_SMTP_PORT
+      SMTP_USER: REPLACE_SMTP_USER
+      SMTP_PASSWORD: REPLACE_SMTP_PASSWORD
+      SMTP_FROM: REPLACE_SMTP_FROM
+      SMTP_FROM_NAME: REPLACE_SMTP_FROM_NAME
+      SMTP_REPLY_TO: REPLACE_SMTP_REPLY_TO
+      EMAIL_DELAY_MIN: REPLACE_EMAIL_DELAY_MIN
+      EMAIL_DELAY_MAX: REPLACE_EMAIL_DELAY_MAX
+      PYTHON_SERVICE_URL: http://python-service:8000
+      UPLOAD_DIR: /tmp/uploads
+      SEED_ADMIN_EMAIL: REPLACE_SEED_ADMIN_EMAIL
+      SEED_ADMIN_PASSWORD: REPLACE_SEED_ADMIN_PASSWORD
+      SEED_ADMIN_NOME: REPLACE_SEED_ADMIN_NOME
+    volumes:
+      - /mnt/hdd-pool/separar-acordao/uploads:/tmp/uploads
+
+  frontend:
+    image: separar-acordao-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      API_INTERNAL_URL: http://backend:3001
+      COOKIE_SECURE: "false"
+    ports:
+      - "3000:3000"
