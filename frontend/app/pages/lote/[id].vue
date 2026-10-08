@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
+import { agruparReenvios, type LinhaEnvio } from '~/utils/reenvios';
 import type { EnvioDetalhe, LoteDetalhe } from '~/types';
 
 definePageMeta({ title: 'Detalhes do lote', middleware: 'auth' });
@@ -53,6 +54,13 @@ const progresso = computed(() => {
   ).length;
   const total = lote.value.totalEnvios ?? lote.value.envios.length;
   return { enviados, total, restantes: total - enviados };
+});
+
+const linhas = computed<LinhaEnvio[]>(() => {
+  if (!lote.value) {
+    return [];
+  }
+  return agruparReenvios(lote.value.envios);
 });
 
 async function carregar() {
@@ -142,25 +150,36 @@ function fecharVisualizacao() {
   envioVisualizado.value = null;
 }
 
-async function alternarConfirmacao(envio: EnvioDetalhe) {
+async function alternarConfirmacao(linha: LinhaEnvio) {
   if (!lote.value) {
     return;
   }
+  const todosConfirmados =
+    linha.envio.confirmado &&
+    linha.reenvios.every((r) => r.confirmado);
+  const ids = [
+    linha.envio.id,
+    ...linha.reenvios.map((r) => r.id),
+  ];
   try {
     await useApi<{ atualizados: number }>(
       `/api/lotes/${lote.value.id}/confirmar`,
       {
         method: 'POST',
         body: {
-          envioIds: [envio.id],
-          confirmado: !envio.confirmado,
+          envioIds: ids,
+          confirmado: !todosConfirmados,
         },
       }
     );
-    envio.confirmado = !envio.confirmado;
-    envio.confirmadoEm = envio.confirmado
+    linha.envio.confirmado = !todosConfirmados;
+    linha.envio.confirmadoEm = linha.envio.confirmado
       ? new Date().toISOString()
       : null;
+    for (const reenvio of linha.reenvios) {
+      reenvio.confirmado = linha.envio.confirmado;
+      reenvio.confirmadoEm = linha.envio.confirmadoEm;
+    }
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
   }
@@ -263,53 +282,68 @@ await carregar();
               <th>Status</th>
               <th>OK?</th>
               <th>Enviado em</th>
-              <th>Reenvio de</th>
+              <th>Reenvio(s)</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="envio in lote.envios" :key="envio.id">
+            <tr v-for="linha in linhas" :key="linha.envio.id">
               <td>
                 <input
                   type="checkbox"
-                  :checked="selecionados.includes(envio.id)"
-                  @change="alternarSelecao(envio.id)"
+                  :checked="selecionados.includes(linha.envio.id)"
+                  @change="alternarSelecao(linha.envio.id)"
                 />
               </td>
               <td>
                 <button
                   class="link-responsavel"
-                  :disabled="!envio.corpoHtml"
-                  @click="visualizarEnvio(envio)"
+                  :disabled="!linha.envio.corpoHtml"
+                  @click="visualizarEnvio(linha.envio)"
                 >
-                  {{ envio.responsavel.nome }}
+                  {{ linha.envio.responsavel.nome }}
                 </button>
               </td>
-              <td>{{ envio.tarefas.length }}</td>
+              <td>{{ linha.envio.tarefas.length }}</td>
               <td>
                 <span
                   :class="
-                    envio.status === 'enviado'
+                    linha.envio.status === 'enviado'
                       ? 'tag tag-verde'
-                      : envio.status === 'falhou'
+                      : linha.envio.status === 'falhou'
                         ? 'tag tag-vermelha'
                         : 'tag tag-amarela'
                   "
                 >
-                  {{ envio.status }}
+                  {{ linha.envio.status }}
                 </span>
               </td>
               <td>
                 <input
                   type="checkbox"
-                  :checked="envio.confirmado"
-                  @change="alternarConfirmacao(envio)"
+                  :checked="
+                    linha.envio.confirmado &&
+                    linha.reenvios.every((r) => r.confirmado)
+                  "
+                  @change="alternarConfirmacao(linha)"
                 />
               </td>
-              <td>{{ formatarData(envio.enviadoEm) }}</td>
+              <td>{{ formatarData(linha.envio.enviadoEm) }}</td>
               <td>
-                <span v-if="envio.reenviadoDe" class="tag tag-amarela">
-                  reenviado
-                </span>
+                <template v-if="linha.reenvios.length">
+                  <div
+                    v-for="reenvio in linha.reenvios"
+                    :key="reenvio.id"
+                    class="reenvio-linha"
+                  >
+                    <template v-if="reenvio.enviadoEm">
+                      reenviado em
+                      {{ formatarData(reenvio.enviadoEm) }}
+                    </template>
+                    <span v-else class="tag tag-vermelha">
+                      reenviado (falhou)
+                    </span>
+                  </div>
+                </template>
                 <span v-else>-</span>
               </td>
             </tr>
@@ -387,6 +421,10 @@ await carregar();
   color: var(--cor-texto-suave);
   cursor: default;
   text-decoration: none;
+}
+
+.reenvio-linha + .reenvio-linha {
+  margin-top: 0.25rem;
 }
 
 .modal-overlay {
