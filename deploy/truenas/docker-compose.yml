@@ -4,6 +4,9 @@
 # valores reais (use o .env da raiz como referencia) antes de colar no
 # TrueNAS. Nunca commite o arquivo preenchido.
 #
+# Imagens locais sao carregadas via `docker load` — por isso
+# pull_policy: never nos servicos (evita pull de registry).
+#
 # Pre-requisitos no NAS (ver deploy/truenas/ comandos no AGENTS/PR):
 #   mkdir -p /mnt/hdd-pool/separar-acordao/{pgdata,uploads}
 #   docker load -i /mnt/hdd-pool/separar-acordao/images.tar.gz
@@ -27,6 +30,7 @@ services:
 
   python-service:
     image: separar-acordao-python-service:latest
+    pull_policy: never
     restart: unless-stopped
     environment:
       MAX_FILE_SIZE_BYTES: "10485760"
@@ -42,6 +46,7 @@ services:
 
   backend:
     image: separar-acordao-backend:latest
+    pull_policy: never
     restart: unless-stopped
     depends_on:
       db:
@@ -71,6 +76,7 @@ services:
 
   frontend:
     image: separar-acordao-frontend:latest
+    pull_policy: never
     restart: unless-stopped
     depends_on:
       - backend
