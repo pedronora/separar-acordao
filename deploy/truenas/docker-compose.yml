@@ -81,6 +81,7 @@ services:
     depends_on:
       - backend
     environment:
+      FRONTEND_BUILD: REPLACE_FRONTEND_BUILD
       API_INTERNAL_URL: http://backend:3001
       COOKIE_SECURE: "false"
     ports:
