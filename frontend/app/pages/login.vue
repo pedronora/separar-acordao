@@ -79,13 +79,19 @@ async function entrar() {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: calc(100vh - 6rem);
-  padding-top: 10vh;
+  min-height: calc(100dvh - 6rem);
+  padding: 2rem 1rem 0;
 }
 
 .login-card {
   width: 100%;
   max-width: 380px;
+}
+
+@media (min-width: 640px) {
+  .login-wrapper {
+    padding-top: 10vh;
+  }
 }
 
 .subtitulo {

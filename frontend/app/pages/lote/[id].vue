@@ -18,13 +18,8 @@ const arquivosLote = computed(() => {
   if (!lote.value) {
     return '';
   }
-  if (
-    lote.value.arquivos &&
-    lote.value.arquivos.length > 0
-  ) {
-    return lote.value.arquivos
-      .map((a) => a.arquivoOrigem)
-      .join(', ');
+  if (lote.value.arquivos && lote.value.arquivos.length > 0) {
+    return lote.value.arquivos.map((a) => a.arquivoOrigem).join(', ');
   }
   return lote.value.arquivoOrigem;
 });
@@ -33,10 +28,7 @@ const etiquetasLote = computed(() => {
   if (!lote.value) {
     return '';
   }
-  if (
-    lote.value.arquivos &&
-    lote.value.arquivos.length > 0
-  ) {
+  if (lote.value.arquivos && lote.value.arquivos.length > 0) {
     return lote.value.arquivos
       .map((a) => a.etiqueta)
       .filter((e) => e)
@@ -155,12 +147,8 @@ async function alternarConfirmacao(linha: LinhaEnvio) {
     return;
   }
   const todosConfirmados =
-    linha.envio.confirmado &&
-    linha.reenvios.every((r) => r.confirmado);
-  const ids = [
-    linha.envio.id,
-    ...linha.reenvios.map((r) => r.id),
-  ];
+    linha.envio.confirmado && linha.reenvios.every((r) => r.confirmado);
+  const ids = [linha.envio.id, ...linha.reenvios.map((r) => r.id)];
   try {
     await useApi<{ atualizados: number }>(
       `/api/lotes/${lote.value.id}/confirmar`,
@@ -245,9 +233,7 @@ await carregar();
           </div>
         </dl>
 
-        <p v-if="lote.erro" class="erro">
-          Motivo da falha: {{ lote.erro }}
-        </p>
+        <p v-if="lote.erro" class="erro">Motivo da falha: {{ lote.erro }}</p>
 
         <button
           class="btn btn-secundario"
@@ -266,89 +252,95 @@ await carregar();
           style="margin-bottom: 0.75rem"
         >
           <template v-if="lote.totalEnvios">
-            {{ progresso.enviados }} de {{ progresso.total }} e-mails
-            enviados (restam {{ progresso.restantes }}).
+            {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
+            (restam {{ progresso.restantes }}).
           </template>
-          <template v-else>
-            Separando as tarefas por pauta...
-          </template>
+          <template v-else> Separando as tarefas por pauta... </template>
         </p>
-        <table class="tabela">
-          <thead>
-            <tr>
-              <th>Sel.</th>
-              <th>Responsável</th>
-              <th>Tarefas</th>
-              <th>Status</th>
-              <th>OK?</th>
-              <th>Enviado em</th>
-              <th>Reenvio(s)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="linha in linhas" :key="linha.envio.id">
-              <td>
-                <input
-                  type="checkbox"
-                  :checked="selecionados.includes(linha.envio.id)"
-                  @change="alternarSelecao(linha.envio.id)"
-                />
-              </td>
-              <td>
-                <button
-                  class="link-responsavel"
-                  :disabled="!linha.envio.corpoHtml"
-                  @click="visualizarEnvio(linha.envio)"
-                >
-                  {{ linha.envio.responsavel.nome }}
-                </button>
-              </td>
-              <td>{{ linha.envio.tarefas.length }}</td>
-              <td>
-                <span
-                  :class="
-                    linha.envio.status === 'enviado'
-                      ? 'tag tag-verde'
-                      : linha.envio.status === 'falhou'
-                        ? 'tag tag-vermelha'
-                        : 'tag tag-amarela'
-                  "
-                >
-                  {{ linha.envio.status }}
-                </span>
-              </td>
-              <td>
-                <input
-                  type="checkbox"
-                  :checked="
-                    linha.envio.confirmado &&
-                    linha.reenvios.every((r) => r.confirmado)
-                  "
-                  @change="alternarConfirmacao(linha)"
-                />
-              </td>
-              <td>{{ formatarData(linha.envio.enviadoEm) }}</td>
-              <td>
-                <template v-if="linha.reenvios.length">
-                  <div
-                    v-for="reenvio in linha.reenvios"
-                    :key="reenvio.id"
-                    class="reenvio-linha"
+        <div class="tabela-responsiva">
+          <table class="tabela tabela--cartoes">
+            <thead>
+              <tr>
+                <th>Sel.</th>
+                <th>Responsável</th>
+                <th>Tarefas</th>
+                <th>Status</th>
+                <th>OK?</th>
+                <th>Enviado em</th>
+                <th>Reenvio(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="linha in linhas" :key="linha.envio.id">
+                <td data-label="Selecionar">
+                  <input
+                    type="checkbox"
+                    :checked="selecionados.includes(linha.envio.id)"
+                    aria-label="Selecionar envio"
+                    @change="alternarSelecao(linha.envio.id)"
+                  />
+                </td>
+                <td data-label="Responsável">
+                  <button
+                    class="link-responsavel"
+                    :disabled="!linha.envio.corpoHtml"
+                    @click="visualizarEnvio(linha.envio)"
                   >
-                    <template v-if="reenvio.enviadoEm">
-                      reenviado em
-                      {{ formatarData(reenvio.enviadoEm) }}
-                    </template>
-                    <span v-else class="tag tag-vermelha">
-                      reenviado (falhou)
-                    </span>
-                  </div>
-                </template>
-                <span v-else>-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    {{ linha.envio.responsavel.nome }}
+                  </button>
+                </td>
+                <td data-label="Tarefas">
+                  {{ linha.envio.tarefas.length }}
+                </td>
+                <td data-label="Status">
+                  <span
+                    :class="
+                      linha.envio.status === 'enviado'
+                        ? 'tag tag-verde'
+                        : linha.envio.status === 'falhou'
+                          ? 'tag tag-vermelha'
+                          : 'tag tag-amarela'
+                    "
+                  >
+                    {{ linha.envio.status }}
+                  </span>
+                </td>
+                <td data-label="Confirmado">
+                  <input
+                    type="checkbox"
+                    :checked="
+                      linha.envio.confirmado &&
+                      linha.reenvios.every((r) => r.confirmado)
+                    "
+                    aria-label="Confirmar conclusão"
+                    @change="alternarConfirmacao(linha)"
+                  />
+                </td>
+                <td data-label="Enviado em">
+                  {{ formatarData(linha.envio.enviadoEm) }}
+                </td>
+                <td data-label="Reenvio(s)">
+                  <template v-if="linha.reenvios.length">
+                    <div
+                      v-for="reenvio in linha.reenvios"
+                      :key="reenvio.id"
+                      class="reenvio-linha"
+                    >
+                      <template v-if="reenvio.enviadoEm">
+                        reenviado em
+                        {{ formatarData(reenvio.enviadoEm) }}
+                      </template>
+                      <span v-else class="tag tag-vermelha">
+                        reenviado (falhou)
+                      </span>
+                    </div>
+                  </template>
+                  <span v-else>-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </template>
 
@@ -407,10 +399,18 @@ await carregar();
 .link-responsavel {
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.5rem 0;
   color: var(--cor-primaria);
   font: inherit;
+  text-align: right;
   cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .link-responsavel {
+    padding: 0;
+    text-align: left;
+  }
 }
 
 .link-responsavel:hover {
@@ -432,27 +432,42 @@ await carregar();
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 0;
   z-index: 50;
 }
 
 .modal {
   background: #fff;
-  border-radius: 8px;
-  max-width: 720px;
+  border-radius: 12px 12px 0 0;
   width: 100%;
-  max-height: 85vh;
+  max-height: 100dvh;
   overflow-y: auto;
-  padding: 1.25rem;
+  padding: 1rem;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .modal-cabecalho {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  .modal {
+    border-radius: 8px;
+    max-width: 720px;
+    max-height: 85vh;
+    padding: 1.25rem;
+  }
 }
 
 .modal-cabecalho h2 {
