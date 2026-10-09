@@ -122,9 +122,7 @@ async function salvarEdicao() {
 }
 
 async function excluirResponsavel(responsavel: Responsavel) {
-  if (
-    !window.confirm(`Excluir o responsável "${responsavel.nome}"?`)
-  ) {
+  if (!window.confirm(`Excluir o responsável "${responsavel.nome}"?`)) {
     return;
   }
   erroMsg.value = '';
@@ -180,87 +178,86 @@ await Promise.all([carregar(), listarResponsaveis()]);
       <button class="btn" @click="criarResponsavel">Cadastrar</button>
 
       <h3>Lista</h3>
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>Situação</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="r in responsaveis"
-            :key="r.id"
-            class="linha-responsavel"
-          >
-            <template v-if="emEdicao?.id === r.id">
-              <td>
-                <input v-model="editarNome" aria-label="Nome" />
-              </td>
-              <td>
-                <input
-                  v-model="editarEmail"
-                  type="email"
-                  aria-label="E-mail"
-                />
-              </td>
-              <td>
-                <span
-                  :class="r.ativo ? 'tag tag-verde' : 'tag tag-vermelha'"
-                >
-                  {{ r.ativo ? 'Ativo' : 'Inativo' }}
-                </span>
-              </td>
-              <td>
-                <div class="acoes">
-                  <button class="btn" @click="salvarEdicao">Salvar</button>
-                  <button
-                    class="btn btn-secundario"
-                    @click="cancelarEdicao"
+      <div class="tabela-responsiva">
+        <table class="tabela tabela--cartoes">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Situação</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="r in responsaveis"
+              :key="r.id"
+              class="linha-responsavel"
+            >
+              <template v-if="emEdicao?.id === r.id">
+                <td data-label="Nome">
+                  <input v-model="editarNome" aria-label="Nome" />
+                </td>
+                <td data-label="E-mail">
+                  <input
+                    v-model="editarEmail"
+                    type="email"
+                    aria-label="E-mail"
+                  />
+                </td>
+                <td data-label="Situação">
+                  <span
+                    :class="r.ativo ? 'tag tag-verde' : 'tag tag-vermelha'"
                   >
-                    Cancelar
-                  </button>
-                </div>
-              </td>
-            </template>
-            <template v-else>
-              <td>{{ r.nome }}</td>
-              <td>{{ r.email }}</td>
-              <td>
-                <span
-                  :class="r.ativo ? 'tag tag-verde' : 'tag tag-vermelha'"
-                >
-                  {{ r.ativo ? 'Ativo' : 'Inativo' }}
-                </span>
-              </td>
-              <td>
-                <div class="acoes">
-                  <button
-                    class="btn btn-secundario"
-                    @click="iniciarEdicao(r)"
+                    {{ r.ativo ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td data-label="Ações">
+                  <div class="acoes">
+                    <button class="btn" @click="salvarEdicao">Salvar</button>
+                    <button class="btn btn-secundario" @click="cancelarEdicao">
+                      Cancelar
+                    </button>
+                  </div>
+                </td>
+              </template>
+              <template v-else>
+                <td data-label="Nome">{{ r.nome }}</td>
+                <td data-label="E-mail">{{ r.email }}</td>
+                <td data-label="Situação">
+                  <span
+                    :class="r.ativo ? 'tag tag-verde' : 'tag tag-vermelha'"
                   >
-                    Editar
-                  </button>
-                  <button
-                    class="btn btn-secundario"
-                    @click="alternarAtivo(r)"
-                  >
-                    {{ r.ativo ? 'Desativar' : 'Ativar' }}
-                  </button>
-                  <button
-                    class="btn btn-perigo"
-                    @click="excluirResponsavel(r)"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </td>
-            </template>
-          </tr>
-        </tbody>
-      </table>
+                    {{ r.ativo ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td data-label="Ações">
+                  <div class="acoes">
+                    <button
+                      class="btn btn-secundario"
+                      @click="iniciarEdicao(r)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="btn btn-secundario"
+                      @click="alternarAtivo(r)"
+                    >
+                      {{ r.ativo ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button
+                      class="btn btn-perigo"
+                      @click="excluirResponsavel(r)"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="card">
@@ -290,7 +287,7 @@ await Promise.all([carregar(), listarResponsaveis()]);
 <style scoped>
 .duas-colunas {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
@@ -300,15 +297,35 @@ h3 {
 
 .linha-responsavel td input {
   width: 100%;
+  min-height: 2.75rem;
   padding: 0.4rem 0.5rem;
   border: 1px solid var(--cor-borda);
   border-radius: 6px;
-  font-size: 0.92rem;
+  font-size: 1rem;
 }
 
 .acoes {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.acoes .btn {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 640px) {
+  .duas-colunas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .linha-responsavel td input {
+    min-height: 0;
+    font-size: 0.92rem;
+  }
+
+  .acoes .btn {
+    flex: 0 0 auto;
+  }
 }
 </style>
