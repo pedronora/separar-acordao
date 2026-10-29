@@ -4,12 +4,14 @@
 # valores reais (use o .env da raiz como referencia) antes de colar no
 # TrueNAS. Nunca commite o arquivo preenchido.
 #
-# Imagens locais sao carregadas via `docker load` — por isso
-# pull_policy: never nos servicos (evita pull de registry).
+# As imagens sao publicadas no GHCR pelo workflow
+# .github/workflows/publish.yml (push em main ou tags v*).
+# pull_policy: always garante que o TrueNAS baixe a imagem mais recente
+# ao (re)iniciar o app.
 #
-# Pre-requisitos no NAS (ver deploy/truenas/ comandos no AGENTS/PR):
+# Pre-requisitos no NAS:
 #   mkdir -p /mnt/hdd-pool/separar-acordao/{pgdata,uploads}
-#   docker load -i /mnt/hdd-pool/separar-acordao/images.tar.gz
+#   docker login ghcr.io -u <usuario>   # apenas se os pacotes forem privados
 #   banco restaurado em /mnt/hdd-pool/separar-acordao/pgdata (pg_restore)
 
 services:
@@ -29,8 +31,8 @@ services:
       retries: 10
 
   python-service:
-    image: separar-acordao-python-service:latest
-    pull_policy: never
+    image: ghcr.io/pedronora/separar-acordao-python-service:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       MAX_FILE_SIZE_BYTES: "10485760"
@@ -45,8 +47,8 @@ services:
       retries: 10
 
   backend:
-    image: separar-acordao-backend:latest
-    pull_policy: never
+    image: ghcr.io/pedronora/separar-acordao-backend:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       db:
@@ -75,8 +77,8 @@ services:
       - /mnt/hdd-pool/separar-acordao/uploads:/tmp/uploads
 
   frontend:
-    image: separar-acordao-frontend:latest
-    pull_policy: never
+    image: ghcr.io/pedronora/separar-acordao-frontend:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - backend
