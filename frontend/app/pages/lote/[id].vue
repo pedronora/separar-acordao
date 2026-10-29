@@ -108,8 +108,8 @@ function alternarSelecao(id: string) {
   }
 }
 
-async function reenviar(envioIds?: string[]) {
-  if (!lote.value) {
+async function reenviar(envioIds: string[]) {
+  if (!lote.value || envioIds.length === 0) {
     return;
   }
   reenviando.value = true;
@@ -122,7 +122,7 @@ async function reenviar(envioIds?: string[]) {
       falhas: string[];
     }>(`/api/lotes/${lote.value.id}/reenvio`, {
       method: 'POST',
-      body: envioIds ? { envioIds } : {},
+      body: { envioIds },
     });
     sucessoMsg.value = `Reenvio concluído: ${resultado.enviados}/${resultado.total} e-mails.`;
     selecionados.value = [];
@@ -237,8 +237,8 @@ await carregar();
 
         <button
           class="btn btn-secundario"
-          :disabled="reenviando"
-          @click="reenviar(selecionados.length ? selecionados : undefined)"
+          :disabled="reenviando || selecionados.length === 0"
+          @click="reenviar(selecionados)"
         >
           {{ reenviando ? 'Reenviando...' : 'Reenviar selecionados' }}
         </button>

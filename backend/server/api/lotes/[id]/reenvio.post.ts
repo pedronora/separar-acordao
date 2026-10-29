@@ -15,7 +15,17 @@ interface CorpoReenvio {
 export default defineEventHandler(async (event) => {
   getUsuarioAutenticado(event);
   const id = getRouterParam(event, 'id');
-  const corpo = (await readBody(event)) as CorpoReenvio;
+  const corpo = (await readBody(event).catch(
+    () => ({})
+  )) as CorpoReenvio;
+
+  const envioIds = corpo?.envioIds;
+  if (!Array.isArray(envioIds) || envioIds.length === 0) {
+    throw createError({
+      statusCode: 422,
+      message: 'Nenhum envio selecionado.',
+    });
+  }
 
   const lote = await prisma.loteEnvio.findUnique({
     where: { id },
@@ -28,13 +38,15 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const selecionados = corpo.envioIds?.length
-    ? lote.envios.filter((e) => corpo.envioIds?.includes(e.id))
-    : lote.envios;
-  if (!selecionados.length) {
+  const idsSelecionados = new Set(envioIds);
+  const selecionados = lote.envios.filter((e) =>
+    idsSelecionados.has(e.id)
+  );
+  if (selecionados.length !== idsSelecionados.size) {
     throw createError({
       statusCode: 422,
-      message: 'Nenhum envio selecionado.',
+      message:
+        'Seleção inválida: um ou mais envios não pertencem a este lote.',
     });
   }
 
