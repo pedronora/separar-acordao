@@ -194,6 +194,7 @@ O projeto segue **GitHub Flow** com **`main` protegido** e fluxo de **Pull Reque
 - `main` é **protegido** — sem commits/pushes diretos. Todo o trabalho acontece em branches de curta duração e entra via **Pull Request** (idealmente com revisão). Vincular o PR à issue relacionada, quando houver.
 - PRs precisam passar em `lint`, `test` e `build` antes do merge.
 - **CI:** `.github/workflows/ci.yml` roda os jobs dos três serviços em PRs e em pushes para `main`: `frontend` e `backend` com `pnpm lint` + `pnpm test` + `pnpm build`, e `python-service` com `ruff check` + `ruff format --check` + `pytest`. Falha em qualquer etapa bloqueia o merge.
+- **Publicação de imagens:** `.github/workflows/publish.yml` builda e publica as imagens no GHCR após o merge em `main` (e em tags `v*`).
 - Fluxo de merge: branch de feature → PR (#n) → CI passa → merge em `main`.
 
 ### Commits e branches
@@ -249,6 +250,7 @@ COOKIE_SECURE=false
 - `docker-compose.yml`: produção — serviços `frontend`, `backend`, `python-service`, `db` (Postgres), sem hot-reload, imagens multi-stage otimizadas.
 - `docker-compose.dev.yml`: desenvolvimento — volumes montados para hot-reload, mesma topologia de serviços.
 - Cada serviço deve ter seu próprio `Dockerfile` no respectivo diretório (`frontend/Dockerfile`, `backend/Dockerfile`, `python-service/Dockerfile`).
+- `.github/workflows/publish.yml` publica as imagens dos três serviços no GHCR em pushes para `main` e em tags `v*` (tags `latest`, `sha-<commit>` e a própria tag de versão).
 - Apenas `frontend` fica exposto publicamente; `backend` e `python-service` são acessíveis apenas pela rede interna Docker (o frontend faz proxy de `/api/**` para o backend).
 
 ---

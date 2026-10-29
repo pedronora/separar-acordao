@@ -124,6 +124,35 @@ docker compose up --build -d
 - A API do backend não fica exposta publicamente — o frontend faz proxy de
   `/api/**` para o backend via rede interna.
 
+### Imagens publicadas (GHCR)
+
+O workflow `Publish images` publica as três imagens no GitHub Container
+Registry a cada push em `main` e em tags `v*`:
+
+| Serviço | Imagem |
+| --- | --- |
+| Frontend | `ghcr.io/pedronora/separar-acordao-frontend` |
+| Backend | `ghcr.io/pedronora/separar-acordao-backend` |
+| Python service | `ghcr.io/pedronora/separar-acordao-python-service` |
+
+Tags geradas:
+
+- `latest` — último push em `main`
+- `sha-<commit>` — commit específico
+- `v*` — quando uma tag de versão é enviada
+
+```bash
+docker pull ghcr.io/pedronora/separar-acordao-frontend:latest
+docker pull ghcr.io/pedronora/separar-acordao-backend:latest
+docker pull ghcr.io/pedronora/separar-acordao-python-service:latest
+```
+
+Se o pacote estiver privado, autentique antes:
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u pedronora --password-stdin
+```
+
 ### Desenvolvimento (Docker, hot-reload)
 
 ```bash
