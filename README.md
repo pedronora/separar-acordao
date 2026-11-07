@@ -22,6 +22,10 @@ referência (ver [Referência de negócio](#referência-de-negócio)).
 - **Confirmação de responsáveis** — checkbox na tabela de envios para assinalar
   quais responsáveis já confirmaram conclusão; quando todos confirmam, a linha
   do lote fica com fundo verde no histórico.
+- **Comunicação de conclusão ao desembargador** — quando todos os responsáveis
+  confirmam a revisão, a ferramenta oferece o envio de um e-mail de conclusão ao
+  desembargador, com um quadro-resumo por etiqueta e pauta (quantidade de
+  recursos julgados) e seleção opcional de responsáveis em cópia oculta (BCC).
 - **Histórico de envios** — o quê foi enviado, para quem, quando e por qual
   usuário do sistema.
 - **Reenvio** de um envio específico (todo ou parcial) a partir do histórico.
@@ -229,11 +233,16 @@ cd python-service && uv run uvicorn app.main:app --reload --port 8000
 
 - **PostgreSQL**, gerenciado via **Prisma ORM** (migrations com Prisma Migrate).
 - Entidades: `usuarios`, `responsaveis`, `lotes_envio`, `envios`,
-  `configuracoes`.
+  `configuracoes`, `comunicacoes_desembargador`.
   - `lotes_envio` guarda os metadados dos múltiplos arquivos em `arquivos`
     (JSON), além de `arquivo_origem` para compatibilidade com lotes legados.
   - `envios` registra a confirmação de conclusão do responsável em `confirmado`
     (boolean) e `confirmado_em` (timestamp).
+  - `comunicacoes_desembargador` registra a comunicação de conclusão (1:1 com o
+    lote): destinatário, assunto, corpo, BCC, status, datas e erro.
+- Configurações editáveis em `configuracoes`:
+  `email_padrao_responsavel_inativo`, `desembargador_nome` e
+  `desembargador_email`.
 - Nunca alterar o schema manualmente em produção — sempre via migrations.
 
 ---

@@ -10,7 +10,7 @@ export default (async () => {
       },
     },
     {
-      files: ['app/pages/lote/*.vue'],
+      files: ['app/pages/lote/*.vue', 'app/components/*.vue'],
       rules: {
         'vue/no-v-html': 'off',
       },

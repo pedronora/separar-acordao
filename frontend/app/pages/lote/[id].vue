@@ -2,7 +2,8 @@
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
 import { agruparReenvios, type LinhaEnvio } from '~/utils/reenvios';
-import type { EnvioDetalhe, LoteDetalhe } from '~/types';
+import { deveApresentarComunicacaoAutomaticamente } from '~/utils/comunicacao';
+import type { ComunicacaoPreview, EnvioDetalhe, LoteDetalhe } from '~/types';
 
 definePageMeta({ title: 'Detalhes do lote', middleware: 'auth' });
 
@@ -13,6 +14,9 @@ const reenviando = ref(false);
 const erroMsg = ref('');
 const sucessoMsg = ref('');
 const envioVisualizado = ref<EnvioDetalhe | null>(null);
+const comunicacaoDados = ref<ComunicacaoPreview | null>(null);
+const modalComunicacaoAberto = ref(false);
+const preparandoComunicacao = ref(false);
 
 const arquivosLote = computed(() => {
   if (!lote.value) {
@@ -55,6 +59,15 @@ const linhas = computed<LinhaEnvio[]>(() => {
   return agruparReenvios(lote.value.envios);
 });
 
+const podeComunicar = computed(() => {
+  if (!lote.value) {
+    return false;
+  }
+  return (
+    lote.value.status === 'processado' && lote.value.completamenteConfirmado
+  );
+});
+
 async function carregar() {
   erroMsg.value = '';
   try {
@@ -62,6 +75,50 @@ async function carregar() {
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
   }
+}
+
+async function abrirComunicacao(automatica: boolean) {
+  if (!lote.value || preparandoComunicacao.value) {
+    return;
+  }
+  preparandoComunicacao.value = true;
+  erroMsg.value = '';
+  try {
+    const dados = await useApi<ComunicacaoPreview>(
+      `/api/lotes/${lote.value.id}/comunicacao/preparar`,
+      { method: 'POST' }
+    );
+    if (automatica && !dados.apresentadaAgora) {
+      return;
+    }
+    if (dados.apresentadaAgora) {
+      lote.value.comunicacao.apresentadaEm =
+        lote.value.comunicacao.apresentadaEm ?? new Date().toISOString();
+    }
+    comunicacaoDados.value = dados;
+    modalComunicacaoAberto.value = true;
+  } catch (erro) {
+    erroMsg.value = mensagemDeErro(erro);
+  } finally {
+    preparandoComunicacao.value = false;
+  }
+}
+
+async function avaliarAberturaAutomatica() {
+  if (deveApresentarComunicacaoAutomaticamente(lote.value)) {
+    await abrirComunicacao(true);
+  }
+}
+
+function fecharComunicacao() {
+  modalComunicacaoAberto.value = false;
+  comunicacaoDados.value = null;
+}
+
+async function comunicacaoEnviadaComSucesso() {
+  fecharComunicacao();
+  sucessoMsg.value = 'Comunicação enviada ao desembargador com sucesso.';
+  await carregar();
 }
 
 let intervalo: ReturnType<typeof setInterval> | null = null;
@@ -93,10 +150,11 @@ watch(
 
 onUnmounted(pararAcompanhamento);
 
-onMounted(() => {
+onMounted(async () => {
   if (lote.value?.status === 'processando') {
     iniciarAcompanhamento();
   }
+  await avaliarAberturaAutomatica();
 });
 
 function alternarSelecao(id: string) {
@@ -150,23 +208,20 @@ async function alternarConfirmacao(linha: LinhaEnvio) {
     linha.envio.confirmado && linha.reenvios.every((r) => r.confirmado);
   const ids = [linha.envio.id, ...linha.reenvios.map((r) => r.id)];
   try {
-    await useApi<{ atualizados: number }>(
-      `/api/lotes/${lote.value.id}/confirmar`,
-      {
-        method: 'POST',
-        body: {
-          envioIds: ids,
-          confirmado: !todosConfirmados,
-        },
-      }
-    );
-    linha.envio.confirmado = !todosConfirmados;
-    linha.envio.confirmadoEm = linha.envio.confirmado
-      ? new Date().toISOString()
-      : null;
-    for (const reenvio of linha.reenvios) {
-      reenvio.confirmado = linha.envio.confirmado;
-      reenvio.confirmadoEm = linha.envio.confirmadoEm;
+    const resultado = await useApi<{
+      atualizados: number;
+      completamenteConfirmado: boolean;
+      transicao: boolean;
+    }>(`/api/lotes/${lote.value.id}/confirmar`, {
+      method: 'POST',
+      body: {
+        envioIds: ids,
+        confirmado: !todosConfirmados,
+      },
+    });
+    await carregar();
+    if (resultado.transicao) {
+      await avaliarAberturaAutomatica();
     }
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
@@ -342,6 +397,46 @@ await carregar();
           </table>
         </div>
       </section>
+
+      <section class="card">
+        <h2>Comunicação ao desembargador</h2>
+        <p v-if="!lote.comunicacao.configurado" class="dica">
+          Cadastre o nome e o e-mail do desembargador em
+          <NuxtLink to="/configuracoes">Configurações</NuxtLink>
+          para habilitar o envio.
+        </p>
+        <p v-else-if="lote.comunicacao.status === 'enviada'" class="sucesso">
+          Comunicação enviada
+          <template v-if="lote.comunicacao.enviadaEm">
+            em {{ formatarData(lote.comunicacao.enviadaEm) }}
+          </template>
+          .
+        </p>
+        <p v-else-if="!podeComunicar" class="dica">
+          A comunicação fica disponível quando todos os responsáveis
+          confirmarem a conclusão da revisão.
+        </p>
+        <p v-else class="dica">
+          Todos os responsáveis confirmaram a revisão. Envie a comunicação de
+          conclusão ao desembargador quando estiver pronto.
+        </p>
+
+        <button
+          v-if="
+            lote.comunicacao.configurado &&
+            lote.comunicacao.status !== 'enviada'
+          "
+          class="btn"
+          :disabled="!podeComunicar || preparandoComunicacao"
+          @click="abrirComunicacao(false)"
+        >
+          {{
+            preparandoComunicacao
+              ? 'Preparando...'
+              : 'Comunicar conclusão ao desembargador'
+          }}
+        </button>
+      </section>
     </template>
 
     <div
@@ -375,6 +470,13 @@ await carregar();
         </div>
       </div>
     </div>
+    <ComunicacaoDesembargadorModal
+      v-if="modalComunicacaoAberto && comunicacaoDados"
+      :lote-id="lote?.id ?? ''"
+      :dados="comunicacaoDados"
+      @fechar="fecharComunicacao"
+      @enviado="comunicacaoEnviadaComSucesso"
+    />
   </div>
 </template>
 
@@ -425,6 +527,11 @@ await carregar();
 
 .reenvio-linha + .reenvio-linha {
   margin-top: 0.25rem;
+}
+
+.dica {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
 }
 
 .modal-overlay {

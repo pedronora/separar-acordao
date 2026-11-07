@@ -1,3 +1,6 @@
+import { loteCompletamenteConfirmado } from '../../utils/comunicacao';
+import { obterDadosDesembargador } from '../../utils/configuracoes';
+
 export default defineEventHandler(async (event) => {
   getUsuarioAutenticado(event);
   const id = getRouterParam(event, 'id');
@@ -11,6 +14,7 @@ export default defineEventHandler(async (event) => {
           responsavel: { select: { id: true, nome: true, email: true } },
         },
       },
+      comunicacao: true,
     },
   });
   if (!lote) {
@@ -19,5 +23,21 @@ export default defineEventHandler(async (event) => {
       message: 'Lote não encontrado.',
     });
   }
-  return lote;
+
+  const { comunicacao, ...dadosLote } = lote;
+  const desembargador = await obterDadosDesembargador();
+
+  return {
+    ...dadosLote,
+    completamenteConfirmado: loteCompletamenteConfirmado(lote.envios),
+    comunicacao: {
+      configurado: Boolean(
+        desembargador.nome.trim() && desembargador.email.trim()
+      ),
+      status: comunicacao?.status ?? null,
+      apresentadaEm: comunicacao?.apresentadaEm ?? null,
+      enviadaEm: comunicacao?.enviadaEm ?? null,
+      erro: comunicacao?.erro ?? null,
+    },
+  };
 });
