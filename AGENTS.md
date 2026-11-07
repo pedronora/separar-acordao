@@ -60,7 +60,8 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
   - `responsaveis` (destinatários pré-cadastrados): id, nome, email, ativo, criado_em, atualizado_em.
   - `lotes_envio` (um processamento de arquivo): id, arquivo_origem, usuario_id (quem processou), criado_em, status, arquivos (JSON — metadados de cada arquivo: token, arquivoOrigem, etiqueta, pautas).
   - `envios` (um e-mail para um responsável dentro de um lote): id, lote_id, responsavel_id, tarefas (JSON), enviado_em, reenviado_de (nullable, self-reference), status (`pendente`, `enviado`, `falhou`), confirmado (boolean — responsável confirmou conclusão), confirmado_em (timestamp).
-  - `configuracoes` (chave-valor, editável pela interface): chave, valor, atualizado_em. Chave usada: `email_padrao_responsavel_inativo` (e-mail padrão para envios de responsáveis inativos).
+  - `configuracoes` (chave-valor, editável pela interface): chave, valor, atualizado_em. Chaves usadas: `email_padrao_responsavel_inativo` (e-mail padrão para envios de responsáveis inativos), `desembargador_nome` e `desembargador_email` (destinatário da comunicação de conclusão).
+  - `comunicacoes_desembargador` (comunicação de conclusão, 1:1 com o lote): id, lote_id (unique), usuario_id, status (`pendente`, `enviando`, `enviada`, `falhou`), destinatario, destinatario_nome, assunto, corpo_html, bcc (JSON), erro, apresentada_em, enviada_em, criado_em, atualizado_em.
 - Migrations gerenciadas via Prisma Migrate — nunca alterar o schema do banco manualmente em produção.
 
 ### Autenticação
@@ -72,7 +73,7 @@ Monorepo com três componentes desacoplados, orquestrados via Docker Compose:
 ### E-mail
 - Envio via SMTP configurável por variáveis de ambiente (ver seção 6), usando uma lib como `nodemailer` no backend.
 - Cada envio deve ser registrado em `envios` **antes ou imediatamente após** o disparo, com o resultado (sucesso/falha), para garantir rastreabilidade mesmo em caso de erro parcial.
-- **Não usar cópia oculta (BCC):** a conferência de conclusão é feita pela própria ferramenta (checkbox de confirmação de responsáveis), não por cópia de e-mail.
+- **Não usar cópia oculta (BCC)** nos envios de tarefas: a conferência de conclusão é feita pela própria ferramenta (checkbox de confirmação de responsáveis), não por cópia de e-mail. **Exceção:** a comunicação de conclusão ao desembargador pode usar BCC para os responsáveis ativos selecionados na interface, sem expor os endereços entre si.
 
 ---
 
