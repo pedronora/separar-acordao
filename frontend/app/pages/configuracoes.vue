@@ -4,7 +4,11 @@ import type { Configuracoes, Responsavel } from '~/types';
 
 definePageMeta({ title: 'Configurações', middleware: 'auth' });
 
-const config = ref<Configuracoes>({ emailPadraoResponsavelInativo: '' });
+const config = ref<Configuracoes>({
+  emailPadraoResponsavelInativo: '',
+  desembargadorNome: '',
+  desembargadorEmail: '',
+});
 const salvo = ref(false);
 const erroMsg = ref('');
 const sucessoMsg = ref('');
@@ -42,6 +46,28 @@ async function salvarConfig() {
     config.value.emailPadraoResponsavelInativo =
       atualizado.emailPadraoResponsavelInativo;
     salvo.value = true;
+  } catch (erro) {
+    erroMsg.value = mensagemDeErro(erro);
+  }
+}
+
+async function salvarDesembargador() {
+  erroMsg.value = '';
+  sucessoMsg.value = '';
+  try {
+    const atualizado = await useApi<Configuracoes>(
+      '/api/configuracoes/desembargador',
+      {
+        method: 'PUT',
+        body: {
+          nome: config.value.desembargadorNome,
+          email: config.value.desembargadorEmail,
+        },
+      }
+    );
+    config.value.desembargadorNome = atualizado.desembargadorNome;
+    config.value.desembargadorEmail = atualizado.desembargadorEmail;
+    sucessoMsg.value = 'Dados do desembargador salvos.';
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
   }
@@ -258,6 +284,35 @@ await Promise.all([carregar(), listarResponsaveis()]);
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>Comunicação de conclusão</h2>
+      <p>
+        Dados do desembargador que receberá a comunicação quando todos os
+        responsáveis confirmarem a revisão do lote.
+      </p>
+
+      <div class="duas-colunas">
+        <div class="campo">
+          <label for="desembargador-nome">Nome do desembargador</label>
+          <input
+            id="desembargador-nome"
+            v-model="config.desembargadorNome"
+            placeholder="Nome completo"
+          />
+        </div>
+        <div class="campo">
+          <label for="desembargador-email">E-mail do desembargador</label>
+          <input
+            id="desembargador-email"
+            v-model="config.desembargadorEmail"
+            type="email"
+            placeholder="desembargador@trt12.jus.br"
+          />
+        </div>
+      </div>
+      <button class="btn" @click="salvarDesembargador">Salvar</button>
     </section>
 
     <section class="card">

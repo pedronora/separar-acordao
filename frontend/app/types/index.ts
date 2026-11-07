@@ -53,6 +53,43 @@ export interface EnvioIniciado {
 
 export interface Configuracoes {
   emailPadraoResponsavelInativo: string;
+  desembargadorNome: string;
+  desembargadorEmail: string;
+}
+
+export type ComunicacaoStatus = 'pendente' | 'enviando' | 'enviada' | 'falhou';
+
+export interface ComunicacaoResumo {
+  configurado: boolean;
+  status: ComunicacaoStatus | null;
+  apresentadaEm: string | null;
+  enviadaEm: string | null;
+  erro: string | null;
+}
+
+export interface ResponsavelBcc {
+  id: string;
+  nome: string;
+  email: string;
+}
+
+export interface ResumoComunicacaoItem {
+  etiqueta: string;
+  pauta: string;
+  quantidade: number;
+}
+
+export interface ComunicacaoPreview {
+  destinatario: { nome: string; email: string };
+  assunto: string;
+  corpoHtml: string;
+  resumo: ResumoComunicacaoItem[];
+  bccDisponiveis: ResponsavelBcc[];
+  status: ComunicacaoStatus;
+  enviadaEm: string | null;
+  erro: string | null;
+  apresentadaAgora: boolean;
+  jaEnviada: boolean;
 }
 
 export interface LoteResumo {
@@ -105,6 +142,8 @@ export interface LoteDetalhe {
   status: 'processando' | 'processado' | 'falhou';
   erro: string | null;
   totalEnvios: number | null;
+  completamenteConfirmado: boolean;
+  comunicacao: ComunicacaoResumo;
   usuario: { id: string; nome: string; email: string };
   envios: EnvioDetalhe[];
 }
