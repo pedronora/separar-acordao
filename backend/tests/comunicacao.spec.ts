@@ -12,7 +12,9 @@ import {
   normalizarBcc,
   podeComunicarLote,
   primeiroNome,
+  sanitizarCorpoComunicacao,
   saudacaoPorHorario,
+  validarAssuntoComunicacao,
 } from '../server/utils/comunicacao';
 import {
   extrairDadosDesembargador,
@@ -384,5 +386,83 @@ describe('montarOpcoesEmail', () => {
     });
 
     expect(opcoes.bcc).toBeUndefined();
+  });
+});
+
+describe('validarAssuntoComunicacao', () => {
+  it('remove quebras de linha e normaliza espaços', () => {
+    expect(validarAssuntoComunicacao('  Assunto\r\ncom teste  ')).toEqual({
+      valor: 'Assunto com teste',
+      erro: null,
+    });
+  });
+
+  it('rejeita assunto vazio', () => {
+    expect(validarAssuntoComunicacao('   ').erro).toBe(
+      'Informe o assunto do e-mail.'
+    );
+  });
+
+  it('rejeita assunto acima do limite', () => {
+    const resultado = validarAssuntoComunicacao('a'.repeat(201));
+
+    expect(resultado.erro).toContain('200');
+  });
+});
+
+describe('sanitizarCorpoComunicacao', () => {
+  const opcoesHtml = {
+    nomeDesembargador: 'HELIO',
+    resumo: [{ etiqueta: '1ª Turma', pauta: 'P1', quantidade: 3 }],
+    agora: new Date('2026-08-05T15:00:00-03:00'),
+  };
+
+  it('preserva a tabela e os estilos do template', () => {
+    const resultado = sanitizarCorpoComunicacao(
+      montarHtmlComunicacao(opcoesHtml)
+    );
+
+    expect(resultado.erro).toBeNull();
+    expect(resultado.valor).toContain('<table');
+    expect(resultado.valor).toContain('padding:');
+    expect(resultado.valor).toContain('Acórdãos');
+    expect(resultado.valor).toContain('Boa tarde');
+  });
+
+  it('remove scripts, eventos e links perigosos', () => {
+    const resultado = sanitizarCorpoComunicacao(
+      '<p onclick="alert(1)">Oi</p>' +
+        '<script>alert(1)</script>' +
+        '<a href="javascript:alert(1)">link</a>' +
+        '<img src="x" onerror="alert(1)">'
+    );
+
+    expect(resultado.erro).toBeNull();
+    expect(resultado.valor).toContain('<p>Oi</p>');
+    expect(resultado.valor).toContain('link');
+    expect(resultado.valor).not.toContain('script');
+    expect(resultado.valor).not.toContain('onclick');
+    expect(resultado.valor).not.toContain('onerror');
+    expect(resultado.valor).not.toContain('javascript:');
+  });
+
+  it('remove estilos não permitidos', () => {
+    const resultado = sanitizarCorpoComunicacao(
+      '<p style="color: red; position: fixed; ' +
+        'background-image: url(http://x)">Oi</p>'
+    );
+
+    expect(resultado.valor).toContain('color:red');
+    expect(resultado.valor).not.toContain('position');
+    expect(resultado.valor).not.toContain('background-image');
+  });
+
+  it('rejeita corpo vazio ou sem conteúdo válido', () => {
+    expect(sanitizarCorpoComunicacao('   ').erro).toBe(
+      'Informe o corpo do e-mail.'
+    );
+    expect(sanitizarCorpoComunicacao('<script>alert(1)</script>').erro).toBe(
+      'O corpo do e-mail não contém conteúdo válido.'
+    );
   });
 });

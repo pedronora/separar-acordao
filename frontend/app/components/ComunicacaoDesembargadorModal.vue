@@ -16,9 +16,46 @@ const emit = defineEmits<{
 const bccSelecionados = ref<string[]>([]);
 const enviando = ref(false);
 const erroMsg = ref(props.dados.erro ?? '');
+const assuntoEditado = ref(props.dados.assunto);
+const corpoEditado = ref(props.dados.corpoHtml);
+const corpoRef = ref<HTMLElement | null>(null);
 
 const envioConcluido = computed(() => props.dados.status === 'enviada');
 const envioEmAndamento = computed(() => props.dados.status === 'enviando');
+const camposBloqueados = computed(
+  () => enviando.value || envioConcluido.value || envioEmAndamento.value
+);
+
+const resumoBcc = computed(() => {
+  const total = bccSelecionados.value.length;
+  if (total === 0) {
+    return 'Selecionar responsáveis';
+  }
+  if (total === 1) {
+    const responsavel = props.dados.bccDisponiveis.find(
+      (item) => item.id === bccSelecionados.value[0]
+    );
+    return responsavel?.nome ?? '1 selecionado';
+  }
+  return `${total} selecionados`;
+});
+
+const nomesBccSelecionados = computed(() =>
+  props.dados.bccDisponiveis
+    .filter((responsavel) => bccSelecionados.value.includes(responsavel.id))
+    .map((responsavel) => responsavel.nome)
+    .join(', ')
+);
+
+onMounted(() => {
+  if (corpoRef.value) {
+    corpoRef.value.innerHTML = props.dados.corpoHtml;
+  }
+});
+
+function capturarCorpo() {
+  corpoEditado.value = corpoRef.value?.innerHTML ?? '';
+}
 
 function alternarBcc(id: string) {
   const indice = bccSelecionados.value.indexOf(id);
@@ -29,6 +66,10 @@ function alternarBcc(id: string) {
   }
 }
 
+function limparBcc() {
+  bccSelecionados.value = [];
+}
+
 function fechar() {
   if (enviando.value) {
     return;
@@ -37,9 +78,10 @@ function fechar() {
 }
 
 async function enviar() {
-  if (enviando.value || envioConcluido.value || envioEmAndamento.value) {
+  if (camposBloqueados.value) {
     return;
   }
+  capturarCorpo();
   enviando.value = true;
   erroMsg.value = '';
   try {
@@ -49,7 +91,11 @@ async function enviar() {
       jaEnviada: boolean;
     }>(`/api/lotes/${props.loteId}/comunicacao`, {
       method: 'POST',
-      body: { bccResponsavelIds: bccSelecionados.value },
+      body: {
+        bccResponsavelIds: bccSelecionados.value,
+        assunto: assuntoEditado.value,
+        corpoHtml: corpoEditado.value,
+      },
     });
     emit('enviado', { enviadaEm: resultado.enviadaEm });
   } catch (erro) {
@@ -88,49 +134,76 @@ async function enviar() {
             &lt;{{ dados.destinatario.email }}&gt;
           </dd>
         </div>
-        <div>
-          <dt>Assunto</dt>
-          <dd>{{ dados.assunto }}</dd>
-        </div>
       </dl>
 
-      <fieldset class="bcc-lista">
-        <legend>Cópia oculta (BCC)</legend>
-        <p class="dica">
-          Selecione responsáveis para receber cópia oculta. Os endereços
-          escolhidos não aparecem no corpo da mensagem.
-        </p>
-        <label
-          v-for="responsavel in dados.bccDisponiveis"
-          :key="responsavel.id"
-          class="bcc-item"
-        >
-          <input
-            type="checkbox"
-            :checked="bccSelecionados.includes(responsavel.id)"
-            :disabled="enviando || envioConcluido"
-            @change="alternarBcc(responsavel.id)"
-          />
-          <span>
-            {{ responsavel.nome }}
-            <small>{{ responsavel.email }}</small>
-          </span>
-        </label>
-        <p v-if="dados.bccDisponiveis.length === 0" class="dica">
-          Nenhum responsável ativo disponível para cópia oculta.
-        </p>
-      </fieldset>
+      <div class="campo-mensagem">
+        <label for="comunicacao-assunto">Assunto</label>
+        <input
+          id="comunicacao-assunto"
+          v-model="assuntoEditado"
+          :disabled="camposBloqueados"
+        />
+      </div>
 
-      <h3>Prévia da mensagem</h3>
+      <div class="bcc-campo">
+        <span class="bcc-rotulo">Cópia oculta (BCC)</span>
+        <details class="bcc-dropdown">
+          <summary>{{ resumoBcc }}</summary>
+          <div class="bcc-opcoes">
+            <label
+              v-for="responsavel in dados.bccDisponiveis"
+              :key="responsavel.id"
+              class="bcc-item"
+            >
+              <input
+                type="checkbox"
+                :checked="bccSelecionados.includes(responsavel.id)"
+                :disabled="camposBloqueados"
+                @change="alternarBcc(responsavel.id)"
+              />
+              <span>
+                {{ responsavel.nome }}
+                <small>{{ responsavel.email }}</small>
+              </span>
+            </label>
+            <p v-if="dados.bccDisponiveis.length === 0" class="dica">
+              Nenhum responsável ativo disponível para cópia oculta.
+            </p>
+            <button
+              v-if="bccSelecionados.length > 0"
+              type="button"
+              class="btn btn-secundario btn-pequeno"
+              :disabled="camposBloqueados"
+              @click="limparBcc"
+            >
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+        <p v-if="nomesBccSelecionados" class="bcc-selecionados">
+          {{ nomesBccSelecionados }}
+        </p>
+      </div>
+
+      <h3>Mensagem</h3>
+      <p class="dica">Edite o assunto e o corpo antes de enviar.</p>
       <div class="corpo-email">
-        <div v-html="dados.corpoHtml" />
+        <div
+          ref="corpoRef"
+          class="corpo-editavel"
+          role="textbox"
+          aria-label="Corpo do e-mail"
+          aria-multiline="true"
+          :contenteditable="!camposBloqueados"
+          @input="capturarCorpo"
+        />
       </div>
 
       <div class="acoes-modal">
         <button
           v-if="!envioConcluido"
           class="btn"
-          :disabled="enviando || envioEmAndamento"
+          :disabled="camposBloqueados"
           @click="enviar"
         >
           {{
@@ -171,28 +244,55 @@ async function enviar() {
   margin: 0.15rem 0 0;
 }
 
-.bcc-lista {
-  border: 1px solid var(--cor-borda);
-  border-radius: 6px;
-  padding: 0.75rem;
-  margin: 0 0 1rem;
+.campo-mensagem {
+  margin-bottom: 1rem;
 }
 
-.bcc-lista legend {
+.campo-mensagem label,
+.bcc-rotulo {
+  display: block;
   font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.3rem;
+}
+
+.campo-mensagem input {
+  width: 100%;
+}
+
+.bcc-campo {
+  margin-bottom: 1rem;
+}
+
+.bcc-dropdown {
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.bcc-dropdown summary {
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bcc-opcoes {
+  max-height: 14rem;
+  overflow-y: auto;
+  border-top: 1px solid var(--cor-borda);
+  padding: 0.25rem 0.75rem 0.75rem;
 }
 
 .bcc-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0;
+  padding: 0.4rem 0;
   border-top: 1px solid var(--cor-borda);
 }
 
-.bcc-item:first-of-type {
+.bcc-item:first-child {
   border-top: none;
 }
 
@@ -200,6 +300,12 @@ async function enviar() {
   display: block;
   color: var(--cor-texto-suave);
   font-size: 0.8rem;
+}
+
+.bcc-selecionados {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
 }
 
 .dica {
@@ -215,6 +321,11 @@ async function enviar() {
   background: #fff;
   overflow-x: auto;
   margin-bottom: 1rem;
+}
+
+.corpo-editavel {
+  min-height: 12rem;
+  outline: none;
 }
 
 .acoes-modal {

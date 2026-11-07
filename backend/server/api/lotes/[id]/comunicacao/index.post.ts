@@ -5,12 +5,16 @@ import {
   montarAssuntoComunicacao,
   montarHtmlComunicacao,
   normalizarBcc,
+  sanitizarCorpoComunicacao,
+  validarAssuntoComunicacao,
 } from '../../../../utils/comunicacao';
 import { carregarDadosComunicacao } from '../../../../utils/comunicacaoLote';
 import { enviarEmail } from '../../../../utils/email';
 
 interface CorpoComunicacao {
   bccResponsavelIds?: string[];
+  assunto?: string;
+  corpoHtml?: string;
 }
 
 export default defineEventHandler(async (event) => {
@@ -36,11 +40,34 @@ export default defineEventHandler(async (event) => {
   const { lote, desembargador, orgao, dataSessao, resumo } =
     await carregarDadosComunicacao(id);
 
-  const assunto = montarAssuntoComunicacao(orgao, dataSessao);
-  const corpoHtml = montarHtmlComunicacao({
+  const assuntoGerado = montarAssuntoComunicacao(orgao, dataSessao);
+  const corpoGerado = montarHtmlComunicacao({
     nomeDesembargador: desembargador.nome,
     resumo,
   });
+
+  const assuntoValidado = validarAssuntoComunicacao(
+    typeof corpo?.assunto === 'string' ? corpo.assunto : assuntoGerado
+  );
+  if (assuntoValidado.erro) {
+    throw createError({
+      statusCode: 422,
+      message: assuntoValidado.erro,
+    });
+  }
+
+  const corpoValidado = sanitizarCorpoComunicacao(
+    typeof corpo?.corpoHtml === 'string' ? corpo.corpoHtml : corpoGerado
+  );
+  if (corpoValidado.erro) {
+    throw createError({
+      statusCode: 422,
+      message: corpoValidado.erro,
+    });
+  }
+
+  const assunto = assuntoValidado.valor;
+  const corpoHtml = corpoValidado.valor;
 
   const bccResponsaveis =
     idsUnicos.length > 0
