@@ -123,22 +123,40 @@ function criarTransporter(): Transporter {
   });
 }
 
-export async function enviarEmail(opts: {
+export interface OpcoesEmail {
   to: string;
   subject: string;
   html: string;
-}): Promise<void> {
-  const transporter = criarTransporter();
-  await transporter.sendMail({
+  bcc?: string[];
+}
+
+export interface OpcoesEmailNodemailer {
+  from: string;
+  replyTo: string;
+  to: string;
+  subject: string;
+  html: string;
+  bcc?: string[];
+  headers: Record<string, string>;
+}
+
+export function montarOpcoesEmail(opts: OpcoesEmail): OpcoesEmailNodemailer {
+  return {
     from: `"${config.smtpFromName}" <${config.smtpFrom}>`,
     replyTo: config.smtpReplyTo,
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
+    bcc: opts.bcc && opts.bcc.length > 0 ? opts.bcc : undefined,
     headers: {
       'Disposition-Notification-To': config.smtpReplyTo,
     },
-  });
+  };
+}
+
+export async function enviarEmail(opts: OpcoesEmail): Promise<void> {
+  const transporter = criarTransporter();
+  await transporter.sendMail(montarOpcoesEmail(opts));
 }
 
 export async function pausaEntreEnvios(): Promise<void> {
