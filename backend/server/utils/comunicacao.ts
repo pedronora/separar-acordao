@@ -210,7 +210,7 @@ export function listarEtiquetas(resumo: ResumoComunicacaoItem[]): string {
     return '';
   }
   if (etiquetas.length === 1) {
-    return etiquetas[0];
+    return etiquetas[0] ?? '';
   }
   return `${etiquetas.slice(0, -1).join(', ')} e ${
     etiquetas[etiquetas.length - 1]
