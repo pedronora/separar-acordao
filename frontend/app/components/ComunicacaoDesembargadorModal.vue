@@ -258,7 +258,33 @@ async function enviar() {
 }
 
 .campo-mensagem input {
+  display: block;
   width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  color: var(--cor-texto);
+  background-color: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  outline: none;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  box-sizing: border-box;
+}
+
+.campo-mensagem input:focus {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 0.2rem
+    color-mix(in srgb, var(--cor-primaria) 20%, transparent);
+}
+
+.campo-mensagem input:disabled {
+  background-color: #f1f3f5;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .bcc-campo {
