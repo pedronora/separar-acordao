@@ -1,3 +1,8 @@
+import {
+  detectarTransicaoConfirmacao,
+  loteCompletamenteConfirmado,
+} from '../../../utils/comunicacao';
+
 interface CorpoConfirmacao {
   envioIds: string[];
   confirmado: boolean;
@@ -6,14 +11,9 @@ interface CorpoConfirmacao {
 export default defineEventHandler(async (event) => {
   getUsuarioAutenticado(event);
   const id = getRouterParam(event, 'id');
-  const corpo = (await readBody(
-    event
-  )) as CorpoConfirmacao;
+  const corpo = (await readBody(event)) as CorpoConfirmacao;
 
-  if (
-    !Array.isArray(corpo.envioIds) ||
-    corpo.envioIds.length === 0
-  ) {
+  if (!Array.isArray(corpo.envioIds) || corpo.envioIds.length === 0) {
     throw createError({
       statusCode: 422,
       message: 'Nenhum envio selecionado.',
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   const lote = await prisma.loteEnvio.findUnique({
     where: { id },
     include: {
-      envios: { select: { id: true } },
+      envios: { select: { id: true, confirmado: true } },
     },
   });
   if (!lote) {
@@ -33,19 +33,18 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const idsValidos = new Set(
-    lote.envios.map((e) => e.id)
-  );
-  const envioIdsValidos = corpo.envioIds.filter(
-    (eid) => idsValidos.has(eid)
-  );
+  const idsValidos = new Set(lote.envios.map((e) => e.id));
+  const envioIdsValidos = corpo.envioIds.filter((eid) => idsValidos.has(eid));
   if (envioIdsValidos.length === 0) {
     throw createError({
       statusCode: 422,
-      message:
-        'Nenhum envio válido selecionado neste lote.',
+      message: 'Nenhum envio válido selecionado neste lote.',
     });
   }
+
+  const enviosAntes = lote.envios.map((envio) => ({
+    confirmado: envio.confirmado,
+  }));
 
   const agora = corpo.confirmado ? new Date() : null;
 
@@ -57,5 +56,16 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  return { atualizados: atualizados.count };
+  const idsAtualizados = new Set(envioIdsValidos);
+  const enviosDepois = lote.envios.map((envio) => ({
+    confirmado: idsAtualizados.has(envio.id)
+      ? corpo.confirmado
+      : envio.confirmado,
+  }));
+
+  return {
+    atualizados: atualizados.count,
+    completamenteConfirmado: loteCompletamenteConfirmado(enviosDepois),
+    transicao: detectarTransicaoConfirmacao(enviosAntes, enviosDepois),
+  };
 });
