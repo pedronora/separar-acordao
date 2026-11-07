@@ -1,3 +1,5 @@
+import sanitizeHtml from 'sanitize-html';
+
 import { config } from './config';
 import { escaparHtml, type TarefaEmail } from './email';
 
@@ -238,6 +240,128 @@ ${tabela}
         <p>Att,<br/>${escaparHtml(remetente)}</p>
     </div>
     `;
+}
+
+export interface CampoComunicacaoValidado {
+  valor: string;
+  erro: string | null;
+}
+
+export const LIMITE_ASSUNTO_COMUNICACAO = 200;
+
+export const LIMITE_CORPO_COMUNICACAO = 200_000;
+
+const ESTILOS_PERMITIDOS: sanitizeHtml.IOptions['allowedStyles'] = {
+  '*': {
+    'background-color': [/^.*$/],
+    border: [/^.*$/],
+    'border-collapse': [/^.*$/],
+    color: [/^.*$/],
+    'font-family': [/^.*$/],
+    'font-size': [/^.*$/],
+    'font-style': [/^.*$/],
+    'font-weight': [/^.*$/],
+    'line-height': [/^.*$/],
+    margin: [/^.*$/],
+    'max-width': [/^.*$/],
+    padding: [/^.*$/],
+    'text-align': [/^.*$/],
+    'text-decoration': [/^.*$/],
+    'vertical-align': [/^.*$/],
+    width: [/^.*$/],
+  },
+};
+
+const OPCOES_SANITIZE_CORPO: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'a',
+    'b',
+    'blockquote',
+    'br',
+    'div',
+    'em',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'i',
+    'li',
+    'ol',
+    'p',
+    'span',
+    'strong',
+    'table',
+    'tbody',
+    'td',
+    'tfoot',
+    'th',
+    'thead',
+    'tr',
+    'u',
+    'ul',
+  ],
+  allowedAttributes: {
+    '*': ['style', 'colspan', 'rowspan', 'width'],
+    a: ['href', 'title', 'target', 'rel'],
+  },
+  allowedStyles: ESTILOS_PERMITIDOS,
+  allowedSchemes: ['http', 'https', 'mailto'],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform('a', {
+      rel: 'noopener noreferrer',
+    }),
+  },
+};
+
+export function validarAssuntoComunicacao(
+  assunto: unknown
+): CampoComunicacaoValidado {
+  const valor =
+    typeof assunto === 'string' ? assunto.replace(/[\r\n]+/g, ' ').trim() : '';
+
+  if (!valor) {
+    return { valor: '', erro: 'Informe o assunto do e-mail.' };
+  }
+  if (valor.length > LIMITE_ASSUNTO_COMUNICACAO) {
+    return {
+      valor,
+      erro:
+        'O assunto deve ter no máximo ' +
+        `${LIMITE_ASSUNTO_COMUNICACAO} caracteres.`,
+    };
+  }
+  return { valor, erro: null };
+}
+
+export function sanitizarCorpoComunicacao(
+  corpo: unknown
+): CampoComunicacaoValidado {
+  const bruto = typeof corpo === 'string' ? corpo.trim() : '';
+  if (!bruto) {
+    return { valor: '', erro: 'Informe o corpo do e-mail.' };
+  }
+
+  const valor = sanitizeHtml(bruto, OPCOES_SANITIZE_CORPO);
+  const texto = sanitizeHtml(valor, {
+    allowedTags: [],
+    allowedAttributes: {},
+  }).trim();
+
+  if (!texto) {
+    return {
+      valor: '',
+      erro: 'O corpo do e-mail não contém conteúdo válido.',
+    };
+  }
+  if (valor.length > LIMITE_CORPO_COMUNICACAO) {
+    return {
+      valor,
+      erro:
+        'O corpo do e-mail excede o tamanho máximo de ' +
+        `${LIMITE_CORPO_COMUNICACAO} caracteres.`,
+    };
+  }
+  return { valor, erro: null };
 }
 
 export function normalizarBcc(
