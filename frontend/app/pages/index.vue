@@ -316,7 +316,7 @@ async function enviar() {
             <input
               :id="`pauta-${i}-${desde}`"
               :value="pautasPorArquivo[i]?.[desde] ?? ''"
-              placeholder="Ex.: Pauta 13:05 (Sala com 98)"
+              placeholder="Indique a pauta correspondente"
               @input="
                 (pautasPorArquivo[i] ??= {})[desde] = (
                   $event.target as HTMLInputElement
