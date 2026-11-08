@@ -1,39 +1,44 @@
 :root {
   /* marca */
-  --cor-primaria: #1f5f8b;
-  --cor-primaria-escura: #17486a;
-  --cor-primaria-suave: #eaf2f8;
-  --cor-cabecalho: #1f5f8b;
+  --cor-primaria: #0e5a6b;
+  --cor-primaria-escura: #0a4552;
+  --cor-primaria-suave: #eaf3f5;
+  --cor-cabecalho: #06272e;
   --cor-cabecalho-texto: #fff;
-  --cor-cabecalho-texto-suave: #cfe3f1;
+  --cor-cabecalho-texto-suave: #a8c6cc;
 
   /* superfícies */
-  --cor-fundo: #f5f7fa;
+  --cor-fundo: #f4f7f8;
   --cor-superficie: #fff;
-  --cor-superficie-alt: #fafbfc;
-  --cor-borda: #d9dee4;
-  --cor-th-fundo: #eef2f6;
+  --cor-superficie-alt: #fafcfc;
+  --cor-borda: #dce4e7;
+  --cor-borda-campo: #7f9299;
+  --cor-th-fundo: #edf3f4;
 
   /* texto */
   --cor-texto: #1f2933;
-  --cor-texto-suave: #6b7a8a;
+  --cor-texto-suave: #5a6b7a;
 
   /* semânticas */
-  --cor-erro: #b3261e;
-  --cor-erro-fundo: #fdecea;
-  --cor-sucesso: #1e7b34;
-  --cor-sucesso-fundo: #e7f6ea;
-  --cor-alerta: #8a6d1a;
-  --cor-alerta-fundo: #fff7e0;
+  --cor-erro: #a61b29;
+  --cor-erro-fundo: #fcecee;
+  --cor-sucesso: #146c43;
+  --cor-sucesso-fundo: #e7f5ed;
+  --cor-alerta: #8a5e1a;
+  --cor-alerta-fundo: #fbf3e2;
 
   /* indicadores */
-  --cor-trilha: #e2e4e8;
-  --cor-progresso: #2f7d32;
+  --cor-trilha: #dfe8ea;
+  --cor-progresso: #0e5a6b;
 
   /* forma */
   --raio-campo: 6px;
-  --raio-card: 8px;
+  --raio-botao: 8px;
+  --raio-card: 10px;
   --raio-pill: 999px;
+  --anel-foco: 2px solid var(--cor-primaria);
+  --sombra-card: 0 1px 2px rgba(6, 39, 46, 0.06);
+  --sombra-botao: 0 1px 2px rgba(6, 39, 46, 0.12);
 }
 
 * {
@@ -48,6 +53,8 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
   background: var(--cor-fundo);
   color: var(--cor-texto);
 }
@@ -56,6 +63,20 @@ h1,
 h2,
 h3 {
   margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: clamp(1.5rem, 1.15rem + 1.4vw, 1.9rem);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h3 {
+  font-size: 1.05rem;
 }
 
 a {
@@ -65,6 +86,11 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+:focus-visible {
+  outline: var(--anel-foco);
+  outline-offset: 2px;
 }
 
 .container {
@@ -77,6 +103,7 @@ a:hover {
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card);
   padding: 1rem;
   margin-bottom: 1.25rem;
 }
@@ -109,7 +136,7 @@ a:hover {
   width: 100%;
   min-height: 2.75rem;
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--cor-borda);
+  border: 1px solid var(--cor-borda-campo);
   border-radius: var(--raio-campo);
   font-size: 1rem;
 }
@@ -132,11 +159,11 @@ input[type='checkbox'] {
   accent-color: var(--cor-primaria);
 }
 
-.campo input:focus,
-.campo select:focus,
-.input:focus {
-  outline: 2px solid var(--cor-primaria);
-  outline-offset: 1px;
+.campo input:focus-visible,
+.campo select:focus-visible,
+.input:focus-visible {
+  border-color: var(--cor-primaria);
+  outline-offset: 0;
 }
 
 /* Botões */
@@ -146,12 +173,14 @@ input[type='checkbox'] {
   min-height: 2.75rem;
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: var(--raio-campo);
+  border-radius: var(--raio-botao);
   background: var(--cor-primaria);
   color: #fff;
   font-size: 1rem;
   text-align: center;
   cursor: pointer;
+  box-shadow: var(--sombra-botao);
+  transition: background-color 150ms ease;
 }
 
 @media (min-width: 640px) {
@@ -176,6 +205,7 @@ input[type='checkbox'] {
   background: var(--cor-superficie);
   color: var(--cor-primaria);
   border: 1px solid var(--cor-primaria);
+  box-shadow: none;
 }
 
 .btn-secundario:hover {
@@ -186,6 +216,7 @@ input[type='checkbox'] {
   background: var(--cor-superficie);
   color: var(--cor-erro);
   border: 1px solid var(--cor-erro);
+  box-shadow: none;
 }
 
 .btn-perigo:hover {
@@ -201,7 +232,7 @@ input[type='checkbox'] {
 .erro {
   color: var(--cor-erro);
   background: var(--cor-erro-fundo);
-  border: 1px solid var(--cor-erro);
+  border-left: 3px solid var(--cor-erro);
   border-radius: var(--raio-campo);
   padding: 0.6rem 0.8rem;
   margin-bottom: 1rem;
@@ -211,7 +242,7 @@ input[type='checkbox'] {
 .sucesso {
   color: var(--cor-sucesso);
   background: var(--cor-sucesso-fundo);
-  border: 1px solid var(--cor-sucesso);
+  border-left: 3px solid var(--cor-sucesso);
   border-radius: var(--raio-campo);
   padding: 0.6rem 0.8rem;
   margin-bottom: 1rem;
@@ -224,23 +255,57 @@ input[type='checkbox'] {
   color: var(--cor-texto-suave);
 }
 
-/* Tabelas */
+.estado-vazio {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+/* Tabelas: separadores horizontais, sem grade fechada. */
 .tabela {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .tabela th,
 .tabela td {
-  border: 1px solid var(--cor-borda);
-  padding: 0.5rem 0.65rem;
+  padding: 0.6rem 0.65rem;
   text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
 }
 
 .tabela th {
   background: var(--cor-th-fundo);
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+.tabela thead th:first-child {
+  border-top-left-radius: var(--raio-campo);
+}
+
+.tabela thead th:last-child {
+  border-top-right-radius: var(--raio-campo);
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (hover: hover) and (min-width: 640px) {
+  .tabela tbody tr:hover {
+    background: var(--cor-superficie-alt);
+  }
+
+  .tabela tbody tr.linha-confirmada:hover {
+    background: var(--cor-sucesso-fundo);
+  }
 }
 
 .tabela-responsiva {
@@ -306,6 +371,7 @@ input[type='checkbox'] {
   border-radius: var(--raio-pill);
   font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .tag-verde {
@@ -333,6 +399,7 @@ input[type='checkbox'] {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
   margin: 0 0 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .detalhes dt {
@@ -365,4 +432,13 @@ input[type='checkbox'] {
   padding: 0.5rem;
   background: var(--cor-superficie);
   overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .campo input,
+  .campo select,
+  .input {
+    transition: none;
+  }
 }

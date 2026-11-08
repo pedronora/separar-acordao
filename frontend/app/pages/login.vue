@@ -32,7 +32,7 @@ async function entrar() {
     <div class="card login-card">
       <h1>Separar Acórdãos</h1>
       <p class="subtitulo">Acesso restrito ao gabinete</p>
-      <p v-if="erroMsg" class="erro">
+      <p v-if="erroMsg" class="erro" role="alert">
         {{ erroMsg }}
       </p>
       <form @submit.prevent="entrar">

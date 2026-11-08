@@ -103,6 +103,17 @@ async function sair() {
 .nav a {
   color: var(--cor-cabecalho-texto);
   padding: 0.65rem 0;
+  opacity: 0.85;
+}
+
+.nav a:hover,
+.nav a.router-link-exact-active {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.nav a.router-link-exact-active {
+  border-bottom: 2px solid var(--cor-cabecalho-texto);
 }
 
 .usuario {

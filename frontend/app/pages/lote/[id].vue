@@ -236,10 +236,10 @@ await carregar();
     <NuxtLink to="/historico">&larr; Histórico</NuxtLink>
     <h1>Lote {{ lote?.id.slice(0, 8) }}</h1>
 
-    <p v-if="erroMsg" class="erro">
+    <p v-if="erroMsg" class="erro" role="alert">
       {{ erroMsg }}
     </p>
-    <p v-if="sucessoMsg" class="sucesso">
+    <p v-if="sucessoMsg" class="sucesso" role="status">
       {{ sucessoMsg }}
     </p>
 
@@ -278,7 +278,9 @@ await carregar();
           </div>
         </dl>
 
-        <p v-if="lote.erro" class="erro">Motivo da falha: {{ lote.erro }}</p>
+        <p v-if="lote.erro" class="erro" role="alert">
+          Motivo da falha: {{ lote.erro }}
+        </p>
 
         <button
           class="btn btn-secundario"
@@ -291,18 +293,17 @@ await carregar();
 
       <section class="card">
         <h2>Envios</h2>
-        <p
-          v-if="lote.status === 'processando'"
-          class="sucesso"
-          style="margin-bottom: 0.75rem"
-        >
+        <p v-if="lote.status === 'processando'" class="sucesso" role="status">
           <template v-if="lote.totalEnvios">
             {{ progresso.enviados }} de {{ progresso.total }} e-mails enviados
             (restam {{ progresso.restantes }}).
           </template>
           <template v-else> Separando as tarefas por pauta... </template>
         </p>
-        <div class="tabela-responsiva">
+        <p v-if="linhas.length === 0" class="estado-vazio">
+          Nenhum envio gerado ainda.
+        </p>
+        <div v-else class="tabela-responsiva">
           <table class="tabela tabela--cartoes">
             <thead>
               <tr>
@@ -385,7 +386,11 @@ await carregar();
           <NuxtLink to="/configuracoes">Configurações</NuxtLink>
           para habilitar o envio.
         </p>
-        <p v-else-if="lote.comunicacao.status === 'enviada'" class="sucesso">
+        <p
+          v-else-if="lote.comunicacao.status === 'enviada'"
+          class="sucesso"
+          role="status"
+        >
           Comunicação enviada
           <template v-if="lote.comunicacao.enviadaEm">
             em {{ formatarData(lote.comunicacao.enviadaEm) }}

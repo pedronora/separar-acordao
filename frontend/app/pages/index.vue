@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { mensagemDeErro, useApi } from '~/composables/useApi';
-import { rotuloStatus } from '~/utils/status';
 import type {
   ArquivoAnalise,
   EnvioDetalhe,
@@ -173,6 +172,9 @@ async function adicionarArquivo(evento: Event) {
 }
 
 function removerArquivo(indice: number) {
+  if (!window.confirm('Remover este arquivo da lista?')) {
+    return;
+  }
   analises.value.splice(indice, 1);
   const novasEtiquetas: Record<number, string> = {};
   const novasPautas: Record<number, Record<string, string>> = {};
@@ -231,7 +233,7 @@ async function enviar() {
   <div>
     <h1>Novo envio</h1>
 
-    <p v-if="erroMsg" class="erro">
+    <p v-if="erroMsg" class="erro" role="alert">
       {{ erroMsg }}
     </p>
 
@@ -268,7 +270,9 @@ async function enviar() {
       </div>
 
       <div class="campo">
+        <label for="arquivo-csv">Arquivo CSV</label>
         <input
+          id="arquivo-csv"
           type="file"
           accept=".csv"
           :disabled="carregandoAnalise"
@@ -353,7 +357,14 @@ async function enviar() {
       <h2>3. Acompanhamento</h2>
 
       <div v-if="processando" class="progresso">
-        <div class="barra-progresso">
+        <div
+          class="barra-progresso"
+          role="progressbar"
+          :aria-valuenow="percentual"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-label="Progresso do envio"
+        >
           <div
             class="barra-preenchimento"
             :style="{ width: percentual + '%' }"
@@ -375,18 +386,19 @@ async function enviar() {
       <p
         v-else-if="lote.status === 'processado' && !concluidoComFalhas"
         class="sucesso"
+        role="status"
       >
         Envio concluído:
         {{ progresso.enviados }}/{{ progresso.total }}
         e-mails enviados com sucesso ·
         {{ formatoTempo(segundosDecorridos) }}.
       </p>
-      <p v-else-if="concluidoComFalhas" class="erro">
+      <p v-else-if="concluidoComFalhas" class="erro" role="alert">
         Envio concluído com falhas:
         {{ progresso.enviados }}/{{ progresso.total }}
         enviados.
       </p>
-      <p v-else-if="lote.status === 'falhou'" class="erro">
+      <p v-else-if="lote.status === 'falhou'" class="erro" role="alert">
         Falha no processamento: {{ lote.erro }}
       </p>
 
@@ -397,14 +409,10 @@ async function enviar() {
           class="item-envio"
         >
           <span class="envio-nome">{{ envio.responsavel.nome }}</span>
-          <span class="estampa" :class="`estampa-${envio.status}`">
-            {{
-              rotuloStatus(
-                envio.status,
-                processando && indice === primeiroPendente
-              )
-            }}
-          </span>
+          <TagStatus
+            :status="envio.status"
+            :em-envio="processando && indice === primeiroPendente"
+          />
         </li>
       </ul>
 
@@ -427,15 +435,15 @@ async function enviar() {
 }
 
 .barra-progresso {
-  height: 10px;
-  border-radius: var(--raio-campo);
+  height: 8px;
+  border-radius: var(--raio-pill);
   background: var(--cor-trilha);
   overflow: hidden;
 }
 
 .barra-preenchimento {
   height: 100%;
-  border-radius: var(--raio-campo);
+  border-radius: var(--raio-pill);
   background: var(--cor-progresso);
   transition: width 0.5s ease;
 }
@@ -459,33 +467,11 @@ async function enviar() {
   align-items: center;
   gap: 0.75rem;
   padding: 0.35rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--cor-borda);
 }
 
 .envio-nome {
   font-size: 0.9rem;
-}
-
-.estampa {
-  font-size: 0.8rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--raio-pill);
-  white-space: nowrap;
-}
-
-.estampa-enviado {
-  background: #e3f2e4;
-  color: #2f7d32;
-}
-
-.estampa-pendente {
-  background: #f1f2f4;
-  color: #666;
-}
-
-.estampa-falhou {
-  background: #fde8e8;
-  color: var(--cor-erro);
 }
 
 .arquivo-item {
