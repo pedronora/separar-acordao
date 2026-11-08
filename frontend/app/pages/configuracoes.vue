@@ -222,11 +222,16 @@ await Promise.all([carregar(), listarResponsaveis()]);
             >
               <template v-if="emEdicao?.id === r.id">
                 <td data-label="Nome">
-                  <input v-model="editarNome" aria-label="Nome" />
+                  <input
+                    v-model="editarNome"
+                    class="input input--compacto"
+                    aria-label="Nome"
+                  />
                 </td>
                 <td data-label="E-mail">
                   <input
                     v-model="editarEmail"
+                    class="input input--compacto"
                     type="email"
                     aria-label="E-mail"
                   />
@@ -340,23 +345,8 @@ await Promise.all([carregar(), listarResponsaveis()]);
 </template>
 
 <style scoped>
-.duas-colunas {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
-
 h3 {
   margin-top: 1.25rem;
-}
-
-.linha-responsavel td input {
-  width: 100%;
-  min-height: 2.75rem;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: 6px;
-  font-size: 1rem;
 }
 
 .acoes {
@@ -370,15 +360,6 @@ h3 {
 }
 
 @media (min-width: 640px) {
-  .duas-colunas {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .linha-responsavel td input {
-    min-height: 0;
-    font-size: 0.92rem;
-  }
-
   .acoes .btn {
     flex: 0 0 auto;
   }

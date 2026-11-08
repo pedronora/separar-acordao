@@ -269,17 +269,7 @@ await carregar();
           <div>
             <dt>Status</dt>
             <dd>
-              <span
-                :class="
-                  lote.status === 'processado'
-                    ? 'tag tag-verde'
-                    : lote.status === 'falhou'
-                      ? 'tag tag-vermelha'
-                      : 'tag tag-amarela'
-                "
-              >
-                {{ lote.status }}
-              </span>
+              <TagStatus :status="lote.status" />
             </dd>
           </div>
           <div>
@@ -348,17 +338,7 @@ await carregar();
                   {{ linha.envio.tarefas.length }}
                 </td>
                 <td data-label="Status">
-                  <span
-                    :class="
-                      linha.envio.status === 'enviado'
-                        ? 'tag tag-verde'
-                        : linha.envio.status === 'falhou'
-                          ? 'tag tag-vermelha'
-                          : 'tag tag-amarela'
-                    "
-                  >
-                    {{ linha.envio.status }}
-                  </span>
+                  <TagStatus :status="linha.envio.status" />
                 </td>
                 <td data-label="Confirmado">
                   <input
@@ -439,37 +419,29 @@ await carregar();
       </section>
     </template>
 
-    <div
+    <AppModal
       v-if="envioVisualizado"
-      class="modal-overlay"
-      @click.self="fecharVisualizacao"
+      :titulo="envioVisualizado.responsavel.nome"
+      @fechar="fecharVisualizacao"
     >
-      <div class="modal">
-        <div class="modal-cabecalho">
-          <h2>{{ envioVisualizado.responsavel.nome }}</h2>
-          <button class="btn btn-secundario" @click="fecharVisualizacao">
-            Fechar
-          </button>
+      <dl class="detalhes">
+        <div>
+          <dt>Para</dt>
+          <dd>{{ envioVisualizado.para || '-' }}</dd>
         </div>
-        <dl class="detalhes">
-          <div>
-            <dt>Para</dt>
-            <dd>{{ envioVisualizado.para || '-' }}</dd>
-          </div>
-          <div>
-            <dt>Assunto</dt>
-            <dd>{{ envioVisualizado.assunto || '-' }}</dd>
-          </div>
-        </dl>
-        <div class="corpo-email">
-          <div
-            v-if="envioVisualizado.corpoHtml"
-            v-html="envioVisualizado.corpoHtml"
-          />
-          <p v-else class="erro">Conteúdo indisponível para este envio.</p>
+        <div>
+          <dt>Assunto</dt>
+          <dd>{{ envioVisualizado.assunto || '-' }}</dd>
         </div>
+      </dl>
+      <div class="corpo-email">
+        <div
+          v-if="envioVisualizado.corpoHtml"
+          v-html="envioVisualizado.corpoHtml"
+        />
+        <p v-else class="erro">Conteúdo indisponível para este envio.</p>
       </div>
-    </div>
+    </AppModal>
     <ComunicacaoDesembargadorModal
       v-if="modalComunicacaoAberto && comunicacaoDados"
       :lote-id="lote?.id ?? ''"
@@ -481,23 +453,6 @@ await carregar();
 </template>
 
 <style scoped>
-.detalhes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin: 0 0 1rem;
-}
-
-.detalhes dt {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--cor-texto-suave);
-}
-
-.detalhes dd {
-  margin: 0.15rem 0 0;
-}
-
 .link-responsavel {
   background: none;
   border: none;
@@ -527,65 +482,5 @@ await carregar();
 
 .reenvio-linha + .reenvio-linha {
   margin-top: 0.25rem;
-}
-
-.dica {
-  color: var(--cor-texto-suave);
-  font-size: 0.9rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-  z-index: 50;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 12px 12px 0 0;
-  width: 100%;
-  max-height: 100dvh;
-  overflow-y: auto;
-  padding: 1rem;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.modal-cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-@media (min-width: 640px) {
-  .modal-overlay {
-    align-items: center;
-    padding: 1.5rem;
-  }
-
-  .modal {
-    border-radius: 8px;
-    max-width: 720px;
-    max-height: 85vh;
-    padding: 1.25rem;
-  }
-}
-
-.modal-cabecalho h2 {
-  margin: 0;
-}
-
-.corpo-email {
-  border: 1px solid var(--cor-borda);
-  border-radius: 6px;
-  padding: 0.5rem;
-  background: #fff;
-  overflow-x: auto;
 }
 </style>
