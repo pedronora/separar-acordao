@@ -28,12 +28,15 @@ await listar();
   <div>
     <h1>Histórico de envios</h1>
 
-    <p v-if="erroMsg" class="erro">
+    <p v-if="erroMsg" class="erro" role="alert">
       {{ erroMsg }}
     </p>
 
     <section class="card">
-      <div class="tabela-responsiva">
+      <p v-if="lotes.length === 0" class="estado-vazio">
+        Nenhum envio registrado ainda.
+      </p>
+      <div v-else class="tabela-responsiva">
         <table class="tabela tabela--cartoes">
           <thead>
             <tr>
@@ -54,11 +57,14 @@ await listar();
                   lote.confirmados > 0 &&
                   lote.confirmados === lote.totalEnvios,
               }"
-              style="cursor: pointer"
-              @click="$router.push(`/lote/${lote.id}`)"
             >
               <td data-label="Data">
-                {{ formatarData(lote.criadoEm) }}
+                <NuxtLink
+                  :to="`/lote/${lote.id}`"
+                  :aria-label="`Abrir detalhes do lote de ${formatarData(lote.criadoEm)}`"
+                >
+                  {{ formatarData(lote.criadoEm) }}
+                </NuxtLink>
               </td>
               <td data-label="Órgão / Sessão">
                 {{ lote.orgao || '-' }} /

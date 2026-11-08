@@ -171,10 +171,10 @@ await Promise.all([carregar(), listarResponsaveis()]);
   <div>
     <h1>Configurações</h1>
 
-    <p v-if="erroMsg" class="erro">
+    <p v-if="erroMsg" class="erro" role="alert">
       {{ erroMsg }}
     </p>
-    <p v-if="sucessoMsg" class="sucesso">
+    <p v-if="sucessoMsg" class="sucesso" role="status">
       {{ sucessoMsg }}
     </p>
 
@@ -204,7 +204,10 @@ await Promise.all([carregar(), listarResponsaveis()]);
       <button class="btn" @click="criarResponsavel">Cadastrar</button>
 
       <h3>Lista</h3>
-      <div class="tabela-responsiva">
+      <p v-if="responsaveis.length === 0" class="estado-vazio">
+        Nenhum responsável cadastrado.
+      </p>
+      <div v-else class="tabela-responsiva">
         <table class="tabela tabela--cartoes">
           <thead>
             <tr>
@@ -328,7 +331,7 @@ await Promise.all([carregar(), listarResponsaveis()]);
         endereço seja configurado.
       </p>
 
-      <p v-if="salvo" class="sucesso">Configuração salva.</p>
+      <p v-if="salvo" class="sucesso" role="status">Configuração salva.</p>
 
       <div class="campo">
         <label for="email-padrao">E-mail padrão</label>

@@ -112,15 +112,15 @@ async function enviar() {
     :bloqueado="enviando"
     @fechar="fechar"
   >
-    <p v-if="erroMsg" class="erro">{{ erroMsg }}</p>
+    <p v-if="erroMsg" class="erro" role="alert">{{ erroMsg }}</p>
 
-    <p v-if="envioConcluido" class="sucesso">
+    <p v-if="envioConcluido" class="sucesso" role="status">
       Comunicação já enviada
       <template v-if="dados.enviadaEm">
         em {{ formatarData(dados.enviadaEm) }} </template
       >.
     </p>
-    <p v-else-if="envioEmAndamento" class="sucesso">
+    <p v-else-if="envioEmAndamento" class="sucesso" role="status">
       O envio desta comunicação já está em andamento.
     </p>
 
@@ -276,6 +276,5 @@ async function enviar() {
 
 .corpo-editavel {
   min-height: 12rem;
-  outline: none;
 }
 </style>
