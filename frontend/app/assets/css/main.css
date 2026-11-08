@@ -1,12 +1,39 @@
 :root {
+  /* marca */
   --cor-primaria: #1f5f8b;
   --cor-primaria-escura: #17486a;
+  --cor-primaria-suave: #eaf2f8;
+  --cor-cabecalho: #1f5f8b;
+  --cor-cabecalho-texto: #fff;
+  --cor-cabecalho-texto-suave: #cfe3f1;
+
+  /* superfícies */
   --cor-fundo: #f5f7fa;
+  --cor-superficie: #fff;
+  --cor-superficie-alt: #fafbfc;
   --cor-borda: #d9dee4;
+  --cor-th-fundo: #eef2f6;
+
+  /* texto */
   --cor-texto: #1f2933;
   --cor-texto-suave: #6b7a8a;
+
+  /* semânticas */
   --cor-erro: #b3261e;
+  --cor-erro-fundo: #fdecea;
   --cor-sucesso: #1e7b34;
+  --cor-sucesso-fundo: #e7f6ea;
+  --cor-alerta: #8a6d1a;
+  --cor-alerta-fundo: #fff7e0;
+
+  /* indicadores */
+  --cor-trilha: #e2e4e8;
+  --cor-progresso: #2f7d32;
+
+  /* forma */
+  --raio-campo: 6px;
+  --raio-card: 8px;
+  --raio-pill: 999px;
 }
 
 * {
@@ -47,9 +74,9 @@ a:hover {
 }
 
 .card {
-  background: #fff;
+  background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
+  border-radius: var(--raio-card);
   padding: 1rem;
   margin-bottom: 1.25rem;
 }
@@ -64,6 +91,7 @@ a:hover {
   }
 }
 
+/* Formulários: qualquer input/select fora de um .campo usa .input. */
 .campo {
   margin-bottom: 0.9rem;
 }
@@ -76,13 +104,26 @@ a:hover {
 }
 
 .campo input,
-.campo select {
+.campo select,
+.input {
   width: 100%;
   min-height: 2.75rem;
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--cor-borda);
-  border-radius: 6px;
+  border-radius: var(--raio-campo);
   font-size: 1rem;
+}
+
+/* Campo compacto em linhas de tabela e cabeçalhos de arquivo. */
+.input--compacto {
+  flex: 1;
+}
+
+@media (min-width: 640px) {
+  .input--compacto {
+    min-height: 0;
+    font-size: 0.92rem;
+  }
 }
 
 input[type='checkbox'] {
@@ -92,18 +133,20 @@ input[type='checkbox'] {
 }
 
 .campo input:focus,
-.campo select:focus {
+.campo select:focus,
+.input:focus {
   outline: 2px solid var(--cor-primaria);
   outline-offset: 1px;
 }
 
+/* Botões */
 .btn {
   display: block;
   width: 100%;
   min-height: 2.75rem;
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--raio-campo);
   background: var(--cor-primaria);
   color: #fff;
   font-size: 1rem;
@@ -130,30 +173,36 @@ input[type='checkbox'] {
 }
 
 .btn-secundario {
-  background: #fff;
+  background: var(--cor-superficie);
   color: var(--cor-primaria);
   border: 1px solid var(--cor-primaria);
 }
 
 .btn-secundario:hover {
-  background: #eaf2f8;
+  background: var(--cor-primaria-suave);
 }
 
 .btn-perigo {
-  background: #fff;
+  background: var(--cor-superficie);
   color: var(--cor-erro);
   border: 1px solid var(--cor-erro);
 }
 
 .btn-perigo:hover {
-  background: #fdecea;
+  background: var(--cor-erro-fundo);
 }
 
+.btn-pequeno {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+/* Alertas */
 .erro {
   color: var(--cor-erro);
-  background: #fdecea;
+  background: var(--cor-erro-fundo);
   border: 1px solid var(--cor-erro);
-  border-radius: 6px;
+  border-radius: var(--raio-campo);
   padding: 0.6rem 0.8rem;
   margin-bottom: 1rem;
   font-size: 0.9rem;
@@ -161,14 +210,21 @@ input[type='checkbox'] {
 
 .sucesso {
   color: var(--cor-sucesso);
-  background: #e7f6ea;
+  background: var(--cor-sucesso-fundo);
   border: 1px solid var(--cor-sucesso);
-  border-radius: 6px;
+  border-radius: var(--raio-campo);
   padding: 0.6rem 0.8rem;
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
 
+.dica {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Tabelas */
 .tabela {
   width: 100%;
   border-collapse: collapse;
@@ -183,7 +239,7 @@ input[type='checkbox'] {
 }
 
 .tabela th {
-  background: #eef2f6;
+  background: var(--cor-th-fundo);
   white-space: nowrap;
 }
 
@@ -201,6 +257,7 @@ input[type='checkbox'] {
   }
 }
 
+/* No mobile a tabela vira cartões; cada <td> precisa de data-label. */
 @media (max-width: 639px) {
   .tabela--cartoes thead {
     display: none;
@@ -216,10 +273,10 @@ input[type='checkbox'] {
 
   .tabela--cartoes tr {
     border: 1px solid var(--cor-borda);
-    border-radius: 8px;
+    border-radius: var(--raio-card);
     margin-bottom: 0.75rem;
     padding: 0.5rem 0.75rem;
-    background: #fff;
+    background: var(--cor-superficie);
   }
 
   .tabela--cartoes td {
@@ -246,26 +303,66 @@ input[type='checkbox'] {
 .tag {
   display: inline-block;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--raio-pill);
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .tag-verde {
-  background: #e7f6ea;
+  background: var(--cor-sucesso-fundo);
   color: var(--cor-sucesso);
 }
 
 .tag-vermelha {
-  background: #fdecea;
+  background: var(--cor-erro-fundo);
   color: var(--cor-erro);
 }
 
 .tag-amarela {
-  background: #fff7e0;
-  color: #8a6d1a;
+  background: var(--cor-alerta-fundo);
+  color: var(--cor-alerta);
 }
 
 .linha-confirmada {
-  background: #e7f6ea;
+  background: var(--cor-sucesso-fundo);
+}
+
+/* Lista de definições (metadados de lote, destinatário de e-mail). */
+.detalhes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.detalhes dt {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.detalhes dd {
+  margin: 0.15rem 0 0;
+}
+
+/* Par de campos lado a lado a partir de 640px. */
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .duas-colunas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Pré-visualização de e-mail. */
+.corpo-email {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-campo);
+  padding: 0.5rem;
+  background: var(--cor-superficie);
+  overflow-x: auto;
 }

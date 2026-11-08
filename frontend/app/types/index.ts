@@ -92,6 +92,9 @@ export interface ComunicacaoPreview {
   jaEnviada: boolean;
 }
 
+export type StatusLote = 'processando' | 'processado' | 'falhou';
+export type StatusEnvio = 'pendente' | 'enviado' | 'falhou';
+
 export interface LoteResumo {
   id: string;
   arquivoOrigem: string;
@@ -99,7 +102,7 @@ export interface LoteResumo {
   orgao: string | null;
   dataSessao: string | null;
   criadoEm: string;
-  status: 'processando' | 'processado' | 'falhou';
+  status: StatusLote;
   erro: string | null;
   usuario: string;
   totalEnvios: number;
@@ -110,7 +113,7 @@ export interface LoteResumo {
 
 export interface EnvioDetalhe {
   id: string;
-  status: 'pendente' | 'enviado' | 'falhou';
+  status: StatusEnvio;
   para: string | null;
   assunto: string | null;
   corpoHtml: string | null;
@@ -139,7 +142,7 @@ export interface LoteDetalhe {
   orgao: string | null;
   dataSessao: string | null;
   criadoEm: string;
-  status: 'processando' | 'processado' | 'falhou';
+  status: StatusLote;
   erro: string | null;
   totalEnvios: number | null;
   completamenteConfirmado: boolean;

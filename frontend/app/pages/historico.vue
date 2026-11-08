@@ -72,17 +72,7 @@ await listar();
                 <span v-if="lote.falhas">({{ lote.falhas }} falhas)</span>
               </td>
               <td data-label="Status">
-                <span
-                  :class="
-                    lote.status === 'processado'
-                      ? 'tag tag-verde'
-                      : lote.status === 'falhou'
-                        ? 'tag tag-vermelha'
-                        : 'tag tag-amarela'
-                  "
-                >
-                  {{ lote.status }}
-                </span>
+                <TagStatus :status="lote.status" />
               </td>
               <td data-label="Usuário">
                 {{ lote.usuario }}

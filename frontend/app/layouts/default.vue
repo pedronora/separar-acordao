@@ -49,8 +49,8 @@ async function sair() {
 
 <style scoped>
 .cabecalho {
-  background: var(--cor-primaria);
-  color: #fff;
+  background: var(--cor-cabecalho);
+  color: var(--cor-cabecalho-texto);
 }
 
 .cabecalho-inner {
@@ -70,15 +70,15 @@ async function sair() {
   min-width: 2.75rem;
   min-height: 2.75rem;
   background: transparent;
-  border: 1px solid #fff;
-  border-radius: 6px;
-  color: #fff;
+  border: 1px solid var(--cor-cabecalho-texto);
+  border-radius: var(--raio-campo);
+  color: var(--cor-cabecalho-texto);
   font-size: 1.2rem;
   cursor: pointer;
 }
 
 .logo {
-  color: #fff;
+  color: var(--cor-cabecalho-texto);
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -101,12 +101,12 @@ async function sair() {
 }
 
 .nav a {
-  color: #fff;
+  color: var(--cor-cabecalho-texto);
   padding: 0.65rem 0;
 }
 
 .usuario {
-  color: #cfe3f1;
+  color: var(--cor-cabecalho-texto-suave);
   padding: 0.65rem 0;
 }
 

@@ -123,6 +123,6 @@ async function entrar() {
 }
 
 .botao-senha:hover {
-  background: #eaf2f8;
+  background: var(--cor-primaria-suave);
 }
 </style>

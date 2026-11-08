@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { mensagemDeErro, useApi } from '~/composables/useApi';
+import { rotuloStatus } from '~/utils/status';
 import type {
   ArquivoAnalise,
   EnvioDetalhe,
@@ -71,18 +72,6 @@ const percentual = computed(() => {
 });
 
 const ordemStatus = ['enviado', 'pendente', 'falhou'] as const;
-
-function rotuloStatus(status: EnvioDetalhe['status'], emEnvio = false) {
-  if (status === 'pendente' && emEnvio) {
-    return 'Enviando...';
-  }
-  const rotulos: Record<EnvioDetalhe['status'], string> = {
-    pendente: 'Pendente',
-    enviado: 'Enviado',
-    falhou: 'Falhou',
-  };
-  return rotulos[status];
-}
 
 const enviosOrdenados = computed(() => {
   if (!lote.value) {
@@ -261,7 +250,7 @@ async function enviar() {
           <input
             :value="etiquetas[i]"
             placeholder="Etiqueta (ex.: Acórdãos 1ª Turma)"
-            class="input-etiqueta"
+            class="input input--compacto"
             @input="etiquetas[i] = ($event.target as HTMLInputElement).value"
           />
           <span class="tag tag-verde">
@@ -433,39 +422,21 @@ async function enviar() {
   gap: 0.75rem;
 }
 
-.dica {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--c-texto-suave, #888);
-}
-
-.duas-colunas {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-  .duas-colunas {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .progresso {
   margin-bottom: 1rem;
 }
 
 .barra-progresso {
   height: 10px;
-  border-radius: 6px;
-  background: #e2e4e8;
+  border-radius: var(--raio-campo);
+  background: var(--cor-trilha);
   overflow: hidden;
 }
 
 .barra-preenchimento {
   height: 100%;
-  border-radius: 6px;
-  background: #2f7d32;
+  border-radius: var(--raio-campo);
+  background: var(--cor-progresso);
   transition: width 0.5s ease;
 }
 
@@ -498,7 +469,7 @@ async function enviar() {
 .estampa {
   font-size: 0.8rem;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--raio-pill);
   white-space: nowrap;
 }
 
@@ -514,15 +485,15 @@ async function enviar() {
 
 .estampa-falhou {
   background: #fde8e8;
-  color: #b3261e;
+  color: var(--cor-erro);
 }
 
 .arquivo-item {
   border: 1px solid var(--cor-borda);
-  border-radius: 6px;
+  border-radius: var(--raio-campo);
   padding: 0.75rem;
   margin-bottom: 0.75rem;
-  background: #fafbfc;
+  background: var(--cor-superficie-alt);
 }
 
 .arquivo-cabecalho {
@@ -532,31 +503,12 @@ async function enviar() {
   gap: 0.5rem;
 }
 
-.input-etiqueta {
-  flex: 1;
-  min-height: 2.75rem;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
 @media (min-width: 640px) {
   .arquivo-cabecalho {
     flex-direction: row;
     align-items: center;
     gap: 0.75rem;
   }
-
-  .input-etiqueta {
-    min-height: 0;
-    font-size: 0.92rem;
-  }
-}
-
-.btn-pequeno {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.82rem;
 }
 
 .bloco-pauta {
@@ -578,6 +530,6 @@ async function enviar() {
 .arquivo-ref {
   font-weight: 400;
   font-size: 0.85em;
-  color: var(--c-texto-suave, #888);
+  color: var(--cor-texto-suave);
 }
 </style>
