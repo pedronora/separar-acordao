@@ -167,6 +167,7 @@ describe('montarAssuntoComunicacao', () => {
 });
 
 describe('montarHtmlComunicacao', () => {
+  const agoraManha = new Date('2026-08-05T09:00:00-03:00');
   const agoraTarde = new Date('2026-08-05T15:00:00-03:00');
   const agoraNoite = new Date('2026-08-05T19:00:00-03:00');
 
@@ -195,6 +196,16 @@ describe('montarHtmlComunicacao', () => {
     expect(html).not.toContain('Prezado');
     expect(html).not.toContain('Permanecemos');
     expect(html).not.toContain('Atenciosamente');
+  });
+
+  it('usa “Bom dia” pela manhã', () => {
+    const html = montarHtmlComunicacao({
+      nomeDesembargador: 'HELIO',
+      resumo,
+      agora: agoraManha,
+    });
+
+    expect(html).toContain('Bom dia, Dr. Helio:');
   });
 
   it('usa “Boa noite” a partir das 18h', () => {
@@ -251,14 +262,29 @@ describe('primeiroNome', () => {
 });
 
 describe('saudacaoPorHorario', () => {
-  it('usa “Boa tarde” antes das 18h', () => {
+  it('usa “Bom dia” entre 6h e 12h', () => {
+    expect(saudacaoPorHorario(new Date('2026-08-05T06:00:00-03:00'))).toBe(
+      'Bom dia'
+    );
+    expect(saudacaoPorHorario(new Date('2026-08-05T11:59:00-03:00'))).toBe(
+      'Bom dia'
+    );
+  });
+
+  it('usa “Boa tarde” entre 12h e 18h', () => {
+    expect(saudacaoPorHorario(new Date('2026-08-05T12:00:00-03:00'))).toBe(
+      'Boa tarde'
+    );
     expect(saudacaoPorHorario(new Date('2026-08-05T17:59:00-03:00'))).toBe(
       'Boa tarde'
     );
   });
 
-  it('usa “Boa noite” a partir das 18h', () => {
+  it('usa “Boa noite” a partir das 18h e antes das 6h', () => {
     expect(saudacaoPorHorario(new Date('2026-08-05T18:00:00-03:00'))).toBe(
+      'Boa noite'
+    );
+    expect(saudacaoPorHorario(new Date('2026-08-05T05:59:00-03:00'))).toBe(
       'Boa noite'
     );
   });

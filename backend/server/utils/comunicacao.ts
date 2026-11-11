@@ -193,7 +193,13 @@ export function saudacaoPorHorario(agora: Date = new Date()): string {
       hourCycle: 'h23',
     }).format(agora)
   );
-  return hora < 18 ? 'Boa tarde' : 'Boa noite';
+  if (hora >= 6 && hora < 12) {
+    return 'Bom dia';
+  }
+  if (hora >= 12 && hora < 18) {
+    return 'Boa tarde';
+  }
+  return 'Boa noite';
 }
 
 export function listarEtiquetas(resumo: ResumoComunicacaoItem[]): string {
