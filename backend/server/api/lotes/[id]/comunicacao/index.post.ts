@@ -15,6 +15,7 @@ interface CorpoComunicacao {
   bccResponsavelIds?: string[];
   assunto?: string;
   corpoHtml?: string;
+  solicitarLeitura?: boolean;
 }
 
 export default defineEventHandler(async (event) => {
@@ -161,6 +162,7 @@ export default defineEventHandler(async (event) => {
       subject: assunto,
       html: corpoHtml,
       bcc,
+      solicitarLeitura: corpo?.solicitarLeitura === true,
     });
   } catch (erro) {
     console.error('Falha ao enviar comunicação ao desembargador:', erro);

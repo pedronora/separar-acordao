@@ -387,6 +387,27 @@ describe('montarOpcoesEmail', () => {
 
     expect(opcoes.bcc).toBeUndefined();
   });
+
+  it('solicita confirmação de leitura por padrão', () => {
+    const opcoes = montarOpcoesEmail({
+      to: 'responsavel@trt12.jus.br',
+      subject: 'Assunto',
+      html: '<p>Olá</p>',
+    });
+
+    expect(opcoes.headers['Disposition-Notification-To']).toBeDefined();
+  });
+
+  it('omite confirmação de leitura quando desativada', () => {
+    const opcoes = montarOpcoesEmail({
+      to: 'des@trt12.jus.br',
+      subject: 'Assunto',
+      html: '<p>Olá</p>',
+      solicitarLeitura: false,
+    });
+
+    expect(opcoes.headers['Disposition-Notification-To']).toBeUndefined();
+  });
 });
 
 describe('validarAssuntoComunicacao', () => {
