@@ -128,6 +128,7 @@ export interface OpcoesEmail {
   subject: string;
   html: string;
   bcc?: string[];
+  solicitarLeitura?: boolean;
 }
 
 export interface OpcoesEmailNodemailer {
@@ -141,6 +142,11 @@ export interface OpcoesEmailNodemailer {
 }
 
 export function montarOpcoesEmail(opts: OpcoesEmail): OpcoesEmailNodemailer {
+  const headers: Record<string, string> = {};
+  if (opts.solicitarLeitura !== false) {
+    headers['Disposition-Notification-To'] = config.smtpReplyTo;
+  }
+
   return {
     from: `"${config.smtpFromName}" <${config.smtpFrom}>`,
     replyTo: config.smtpReplyTo,
@@ -148,9 +154,7 @@ export function montarOpcoesEmail(opts: OpcoesEmail): OpcoesEmailNodemailer {
     subject: opts.subject,
     html: opts.html,
     bcc: opts.bcc && opts.bcc.length > 0 ? opts.bcc : undefined,
-    headers: {
-      'Disposition-Notification-To': config.smtpReplyTo,
-    },
+    headers,
   };
 }
 

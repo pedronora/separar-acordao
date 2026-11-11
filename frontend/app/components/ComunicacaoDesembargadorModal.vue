@@ -14,6 +14,7 @@ const emit = defineEmits<{
 }>();
 
 const bccSelecionados = ref<string[]>([]);
+const solicitarLeitura = ref(false);
 const enviando = ref(false);
 const erroMsg = ref(props.dados.erro ?? '');
 const assuntoEditado = ref(props.dados.assunto);
@@ -95,6 +96,7 @@ async function enviar() {
         bccResponsavelIds: bccSelecionados.value,
         assunto: assuntoEditado.value,
         corpoHtml: corpoEditado.value,
+        solicitarLeitura: solicitarLeitura.value,
       },
     });
     emit('enviado', { enviadaEm: resultado.enviadaEm });
@@ -182,6 +184,15 @@ async function enviar() {
         {{ nomesBccSelecionados }}
       </p>
     </div>
+
+    <label class="opcao-leitura">
+      <input
+        v-model="solicitarLeitura"
+        type="checkbox"
+        :disabled="camposBloqueados"
+      />
+      <span>Solicitar confirmação de leitura</span>
+    </label>
 
     <h3>Mensagem</h3>
     <p class="dica">Edite o assunto e o corpo antes de enviar.</p>
@@ -272,6 +283,14 @@ async function enviar() {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
   color: var(--cor-texto-suave);
+}
+
+.opcao-leitura {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
 }
 
 .corpo-editavel {
