@@ -16,6 +16,7 @@ import {
   saudacaoPorHorario,
   validarAssuntoComunicacao,
 } from '../server/utils/comunicacao';
+import { config } from '../server/utils/config';
 import {
   extrairDadosDesembargador,
   validarDadosDesembargador,
@@ -231,6 +232,17 @@ describe('montarHtmlComunicacao', () => {
     expect(html).toContain('Etq &lt;x&gt;');
     expect(html).toContain('P1 &amp; P2');
     expect(html).toContain('>3</td>');
+  });
+
+  it('usa o remetente padrão quando remetenteNome é vazio', () => {
+    const html = montarHtmlComunicacao({
+      nomeDesembargador: 'HELIO',
+      resumo,
+      remetenteNome: '   ',
+      agora: agoraTarde,
+    });
+
+    expect(html).toContain(`Att,<br/>${config.smtpFromName}`);
   });
 
   it('omite os parênteses quando não há órgão', () => {

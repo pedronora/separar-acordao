@@ -1,11 +1,12 @@
 import {
   montarAssuntoComunicacao,
   montarHtmlComunicacao,
+  primeiroNome,
 } from '../../../../utils/comunicacao';
 import { carregarDadosComunicacao } from '../../../../utils/comunicacaoLote';
 
 export default defineEventHandler(async (event) => {
-  getUsuarioAutenticado(event);
+  const usuario = getUsuarioAutenticado(event);
   const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
@@ -21,6 +22,7 @@ export default defineEventHandler(async (event) => {
   const corpoHtml = montarHtmlComunicacao({
     nomeDesembargador: desembargador.nome,
     resumo,
+    remetenteNome: primeiroNome(usuario.nome),
   });
 
   await prisma.comunicacaoDesembargador.upsert({
