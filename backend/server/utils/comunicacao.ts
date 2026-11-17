@@ -231,7 +231,7 @@ export function montarHtmlComunicacao(opts: {
   remetenteNome?: string;
   agora?: Date;
 }): string {
-  const remetente = opts.remetenteNome ?? config.smtpFromName;
+  const remetente = opts.remetenteNome?.trim() || config.smtpFromName;
   const tabela = montarTabelaResumoComunicacao(opts.resumo);
   const saudacao = saudacaoPorHorario(opts.agora);
   const nome = primeiroNome(opts.nomeDesembargador);

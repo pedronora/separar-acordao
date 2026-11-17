@@ -5,6 +5,7 @@ import {
   montarAssuntoComunicacao,
   montarHtmlComunicacao,
   normalizarBcc,
+  primeiroNome,
   sanitizarCorpoComunicacao,
   validarAssuntoComunicacao,
 } from '../../../../utils/comunicacao';
@@ -45,6 +46,7 @@ export default defineEventHandler(async (event) => {
   const corpoGerado = montarHtmlComunicacao({
     nomeDesembargador: desembargador.nome,
     resumo,
+    remetenteNome: primeiroNome(usuario.nome),
   });
 
   const assuntoValidado = validarAssuntoComunicacao(
