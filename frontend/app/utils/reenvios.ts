@@ -5,6 +5,48 @@ export interface LinhaEnvio {
   reenvios: EnvioDetalhe[];
 }
 
+export interface ProgressoReenvio {
+  total: number;
+  pendentes: number;
+  enviados: number;
+  falhas: number;
+  concluido: boolean;
+}
+
+/**
+ * Resume o andamento dos reenvios a partir dos IDs retornados pela
+ * API. Envios ainda ausentes na listagem contam como pendentes, pois
+ * podem estar sendo criados entre o POST e a próxima consulta.
+ */
+export function progressoReenvio(
+  envios: EnvioDetalhe[],
+  ids: string[]
+): ProgressoReenvio {
+  const porId = new Map(envios.map((e) => [e.id, e]));
+  let pendentes = 0;
+  let enviados = 0;
+  let falhas = 0;
+
+  for (const id of ids) {
+    const envio = porId.get(id);
+    if (!envio || envio.status === 'pendente') {
+      pendentes++;
+    } else if (envio.status === 'enviado') {
+      enviados++;
+    } else {
+      falhas++;
+    }
+  }
+
+  return {
+    total: ids.length,
+    pendentes,
+    enviados,
+    falhas,
+    concluido: pendentes === 0,
+  };
+}
+
 function ordenarCronologico(
   a: EnvioDetalhe,
   b: EnvioDetalhe
