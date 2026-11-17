@@ -187,7 +187,7 @@ describe('montarHtmlComunicacao', () => {
     expect(html).toContain('Boa tarde, Dr. Helio:');
     expect(html).toContain(
       'Os acórdãos da última sessão (1ª Turma e Núcleo 4.0) ' +
-        'estão prontos para assinatura.'
+        'estão prontos para assinatura:'
     );
     expect(html).toContain('>Órgão</th>');
     expect(html).toContain('>Pauta</th>');
@@ -241,7 +241,7 @@ describe('montarHtmlComunicacao', () => {
     });
 
     expect(html).toContain(
-      'Os acórdãos da última sessão estão prontos para assinatura.'
+      'Os acórdãos da última sessão estão prontos para assinatura:'
     );
   });
 });

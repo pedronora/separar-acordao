@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { mensagemDeErro, useApi } from '~/composables/useApi';
 import { formatarData } from '~/utils/format';
-import { agruparReenvios, type LinhaEnvio } from '~/utils/reenvios';
+import {
+  agruparReenvios,
+  progressoReenvio,
+  type LinhaEnvio,
+} from '~/utils/reenvios';
 import { deveApresentarComunicacaoAutomaticamente } from '~/utils/comunicacao';
 import type { ComunicacaoPreview, EnvioDetalhe, LoteDetalhe } from '~/types';
 
@@ -11,12 +15,16 @@ const route = useRoute();
 const lote = ref<LoteDetalhe | null>(null);
 const selecionados = ref<string[]>([]);
 const reenviando = ref(false);
+const reenvioIds = ref<string[]>([]);
 const erroMsg = ref('');
 const sucessoMsg = ref('');
 const envioVisualizado = ref<EnvioDetalhe | null>(null);
 const comunicacaoDados = ref<ComunicacaoPreview | null>(null);
 const modalComunicacaoAberto = ref(false);
 const preparandoComunicacao = ref(false);
+
+const INTERVALO_REENVIO_MS = 3000;
+const MAX_TENTATIVAS_REENVIO = 200;
 
 const arquivosLote = computed(() => {
   if (!lote.value) {
@@ -57,6 +65,25 @@ const linhas = computed<LinhaEnvio[]>(() => {
     return [];
   }
   return agruparReenvios(lote.value.envios);
+});
+
+const andamentoReenvio = computed(() =>
+  progressoReenvio(lote.value?.envios ?? [], reenvioIds.value)
+);
+
+const reenvioBloqueado = computed(
+  () => reenviando.value || lote.value?.status === 'processando'
+);
+
+const rotuloReenvio = computed(() => {
+  if (!reenviando.value) {
+    return 'Reenviar selecionados';
+  }
+  const { total, enviados } = andamentoReenvio.value;
+  if (total > 0) {
+    return `Reenviando ${enviados}/${total}...`;
+  }
+  return 'Reenviando...';
 });
 
 const podeComunicar = computed(() => {
@@ -148,7 +175,10 @@ watch(
   }
 );
 
-onUnmounted(pararAcompanhamento);
+onUnmounted(() => {
+  pararAcompanhamento();
+  pararAcompanhamentoReenvio();
+});
 
 onMounted(async () => {
   if (lote.value?.status === 'processando') {
@@ -166,6 +196,64 @@ function alternarSelecao(id: string) {
   }
 }
 
+let intervaloReenvio: ReturnType<typeof setInterval> | null = null;
+let tentativasReenvio = 0;
+let consultandoReenvio = false;
+
+function pararAcompanhamentoReenvio() {
+  if (intervaloReenvio) {
+    clearInterval(intervaloReenvio);
+    intervaloReenvio = null;
+  }
+  consultandoReenvio = false;
+}
+
+function concluirAcompanhamentoReenvio() {
+  const { total, enviados, falhas } = andamentoReenvio.value;
+  pararAcompanhamentoReenvio();
+  reenviando.value = false;
+  reenvioIds.value = [];
+  if (falhas > 0) {
+    erroMsg.value = `Reenvio concluído com falhas: ${enviados}/${total} e-mails enviados.`;
+  } else {
+    sucessoMsg.value = `Reenvio concluído: ${enviados}/${total} e-mails enviados.`;
+  }
+}
+
+async function acompanharReenvio() {
+  if (consultandoReenvio || reenvioIds.value.length === 0) {
+    return;
+  }
+  consultandoReenvio = true;
+  tentativasReenvio++;
+  try {
+    await carregar();
+  } finally {
+    consultandoReenvio = false;
+  }
+
+  if (andamentoReenvio.value.concluido) {
+    concluirAcompanhamentoReenvio();
+    return;
+  }
+  if (tentativasReenvio >= MAX_TENTATIVAS_REENVIO) {
+    pararAcompanhamentoReenvio();
+    reenviando.value = false;
+    reenvioIds.value = [];
+    erroMsg.value =
+      'O reenvio ainda não foi concluído. Atualize a página para verificar o resultado.';
+  }
+}
+
+function iniciarAcompanhamentoReenvio(ids: string[]) {
+  pararAcompanhamentoReenvio();
+  reenvioIds.value = ids;
+  tentativasReenvio = 0;
+  intervaloReenvio = setInterval(() => {
+    void acompanharReenvio();
+  }, INTERVALO_REENVIO_MS);
+}
+
 async function reenviar(envioIds: string[]) {
   if (!lote.value || envioIds.length === 0) {
     return;
@@ -174,21 +262,25 @@ async function reenviar(envioIds: string[]) {
   erroMsg.value = '';
   sucessoMsg.value = '';
   try {
-    const resultado = await useApi<{
-      total: number;
-      enviados: number;
-      falhas: string[];
-    }>(`/api/lotes/${lote.value.id}/reenvio`, {
-      method: 'POST',
-      body: { envioIds },
-    });
-    sucessoMsg.value = `Reenvio concluído: ${resultado.enviados}/${resultado.total} e-mails.`;
+    const resultado = await useApi<{ envioIds: string[] }>(
+      `/api/lotes/${lote.value.id}/reenvio`,
+      {
+        method: 'POST',
+        body: { envioIds },
+      }
+    );
     selecionados.value = [];
+    reenvioIds.value = resultado.envioIds;
     await carregar();
+    if (andamentoReenvio.value.concluido) {
+      concluirAcompanhamentoReenvio();
+    } else {
+      iniciarAcompanhamentoReenvio(resultado.envioIds);
+    }
   } catch (erro) {
     erroMsg.value = mensagemDeErro(erro);
-  } finally {
     reenviando.value = false;
+    reenvioIds.value = [];
   }
 }
 
@@ -284,11 +376,14 @@ await carregar();
 
         <button
           class="btn btn-secundario"
-          :disabled="reenviando || selecionados.length === 0"
+          :disabled="reenvioBloqueado || selecionados.length === 0"
           @click="reenviar(selecionados)"
         >
-          {{ reenviando ? 'Reenviando...' : 'Reenviar selecionados' }}
+          {{ rotuloReenvio }}
         </button>
+        <p v-if="lote.status === 'processando'" class="dica">
+          Aguarde o término do processamento para reenviar envios.
+        </p>
       </section>
 
       <section class="card">

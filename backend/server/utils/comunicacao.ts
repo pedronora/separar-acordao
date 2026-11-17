@@ -241,7 +241,7 @@ export function montarHtmlComunicacao(opts: {
   return `
     <div style="font-family: Arial, sans-serif; color: #1f2933; max-width: 600px; margin: 0 auto; line-height: 1.5;">
         <p>${saudacao}, Dr. ${escaparHtml(nome)}:</p>
-        <p>Os acórdãos da última sessão${complemento} estão prontos para assinatura.</p>
+        <p>Os acórdãos da última sessão${complemento} estão prontos para assinatura:</p>
 ${tabela}
         <p>Att,<br/>${escaparHtml(remetente)}</p>
     </div>

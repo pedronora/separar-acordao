@@ -1,6 +1,7 @@
 import {
   agruparTarefas,
   montarAssunto,
+  montarHtml,
   type TarefaEmail,
 } from '../../../utils/email';
 import {
@@ -10,6 +11,38 @@ import {
 
 interface CorpoReenvio {
   envioIds?: string[];
+}
+
+interface ReenvioPronto {
+  id: string;
+  para: string;
+  assunto: string;
+  html: string;
+}
+
+async function processarReenvios(reenvios: ReenvioPronto[]): Promise<void> {
+  for (const [indice, reenvio] of reenvios.entries()) {
+    const enviado = await enviarEmail({
+      to: reenvio.para,
+      subject: reenvio.assunto,
+      html: reenvio.html,
+    })
+      .then(() => true)
+      .catch(() => false);
+
+    await prisma.envio
+      .update({
+        where: { id: reenvio.id },
+        data: enviado
+          ? { status: 'enviado', enviadoEm: new Date() }
+          : { status: 'falhou' },
+      })
+      .catch(() => undefined);
+
+    if (indice < reenvios.length - 1) {
+      await pausaEntreEnvios();
+    }
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -66,50 +99,46 @@ export default defineEventHandler(async (event) => {
 
   const orgao = lote.orgao ?? '';
   const dataSessao = lote.dataSessao ?? '';
-  let enviados = 0;
-  const falhas: string[] = [];
 
-  for (const envio of selecionados) {
+  const preparados = selecionados.map((envio) => {
     const tarefas = envio.tarefas as TarefaEmail[];
-    const tabelas = agruparTarefas(tarefas);
-    const html = montarHtml(envio.responsavel.nome, tabelas);
-    const assunto = montarAssunto(orgao, dataSessao, envio.responsavel.nome);
-    const para = emailDestino(envio.responsavel, emailPadraoInativo);
+    return {
+      envio,
+      para: emailDestino(envio.responsavel, emailPadraoInativo),
+      assunto: montarAssunto(orgao, dataSessao, envio.responsavel.nome),
+      html: montarHtml(envio.responsavel.nome, agruparTarefas(tarefas)),
+    };
+  });
 
-    const novoEnvio = await prisma.envio.create({
-      data: {
-        loteId: lote.id,
-        responsavelId: envio.responsavelId,
-        tarefas: envio.tarefas,
-        para,
-        assunto,
-        corpoHtml: html,
-        reenviadoDe: envio.id,
-        status: 'pendente',
-      },
-    });
-
-    try {
-      await enviarEmail({
-        to: para,
-        subject: assunto,
-        html,
+  const reenvios = await prisma.$transaction(async (tx) => {
+    const criados: ReenvioPronto[] = [];
+    for (const item of preparados) {
+      const criado = await tx.envio.create({
+        data: {
+          loteId: lote.id,
+          responsavelId: item.envio.responsavelId,
+          tarefas: item.envio.tarefas,
+          para: item.para,
+          assunto: item.assunto,
+          corpoHtml: item.html,
+          reenviadoDe: item.envio.id,
+          status: 'pendente',
+        },
       });
-      await prisma.envio.update({
-        where: { id: novoEnvio.id },
-        data: { status: 'enviado', enviadoEm: new Date() },
+      criados.push({
+        id: criado.id,
+        para: item.para,
+        assunto: item.assunto,
+        html: item.html,
       });
-      enviados++;
-    } catch {
-      await prisma.envio.update({
-        where: { id: novoEnvio.id },
-        data: { status: 'falhou' },
-      });
-      falhas.push(envio.responsavel.nome);
     }
+    return criados;
+  });
 
-    await pausaEntreEnvios();
-  }
+  void processarReenvios(reenvios).catch(() => undefined);
 
-  return { total: selecionados.length, enviados, falhas };
+  return {
+    total: reenvios.length,
+    envioIds: reenvios.map((reenvio) => reenvio.id),
+  };
 });

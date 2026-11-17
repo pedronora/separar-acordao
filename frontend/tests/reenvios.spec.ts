@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { EnvioDetalhe } from '../app/types';
-import { agruparReenvios } from '../app/utils/reenvios';
+import { agruparReenvios, progressoReenvio } from '../app/utils/reenvios';
 
 function envio(
   parciais: Partial<EnvioDetalhe> & { id: string }
@@ -71,19 +71,10 @@ describe('agruparReenvios', () => {
       enviadoEm: null,
     });
 
-    const linhas = agruparReenvios([
-      original,
-      tarde,
-      cedo,
-      falho,
-    ]);
+    const linhas = agruparReenvios([original, tarde, cedo, falho]);
 
     expect(linhas).toHaveLength(1);
-    expect(linhas[0].reenvios.map((e) => e.id)).toEqual([
-      're1',
-      're2',
-      're3',
-    ]);
+    expect(linhas[0].reenvios.map((e) => e.id)).toEqual(['re1', 're2', 're3']);
   });
 
   it('agrupa reenvio de reenvio (cadeia) no original', () => {
@@ -102,10 +93,7 @@ describe('agruparReenvios', () => {
     const linhas = agruparReenvios([original, primeiro, segundo]);
 
     expect(linhas).toHaveLength(1);
-    expect(linhas[0].reenvios.map((e) => e.id)).toEqual([
-      're1',
-      're2',
-    ]);
+    expect(linhas[0].reenvios.map((e) => e.id)).toEqual(['re1', 're2']);
   });
 
   it('trata reenvio com pai inexistente como original', () => {
@@ -115,5 +103,71 @@ describe('agruparReenvios', () => {
 
     expect(linhas).toHaveLength(1);
     expect(linhas[0]).toEqual({ envio: orfao, reenvios: [] });
+  });
+});
+
+describe('progressoReenvio', () => {
+  it('considera pendentes os envios ainda ausentes na listagem', () => {
+    const progresso = progressoReenvio([], ['re1', 're2']);
+
+    expect(progresso).toEqual({
+      total: 2,
+      pendentes: 2,
+      enviados: 0,
+      falhas: 0,
+      concluido: false,
+    });
+  });
+
+  it('conta enviados, falhas e pendentes', () => {
+    const progresso = progressoReenvio(
+      [
+        envio({ id: 're1' }),
+        envio({ id: 're2', status: 'falhou', enviadoEm: null }),
+        envio({ id: 're3', status: 'pendente', enviadoEm: null }),
+      ],
+      ['re1', 're2', 're3']
+    );
+
+    expect(progresso).toEqual({
+      total: 3,
+      pendentes: 1,
+      enviados: 1,
+      falhas: 1,
+      concluido: false,
+    });
+  });
+
+  it('conclui quando todos os envios deixam de estar pendentes', () => {
+    const progresso = progressoReenvio(
+      [envio({ id: 're1' }), envio({ id: 're2' })],
+      ['re1', 're2']
+    );
+
+    expect(progresso).toEqual({
+      total: 2,
+      pendentes: 0,
+      enviados: 2,
+      falhas: 0,
+      concluido: true,
+    });
+  });
+
+  it('ignora envios que não fazem parte do reenvio', () => {
+    const progresso = progressoReenvio(
+      [
+        envio({ id: 're1', status: 'pendente', enviadoEm: null }),
+        envio({ id: 'outro', status: 'pendente', enviadoEm: null }),
+      ],
+      ['re1']
+    );
+
+    expect(progresso).toEqual({
+      total: 1,
+      pendentes: 1,
+      enviados: 0,
+      falhas: 0,
+      concluido: false,
+    });
   });
 });
