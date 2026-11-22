@@ -248,9 +248,21 @@ await Promise.all([carregar(), listarResponsaveis()]);
                 </td>
                 <td data-label="Ações">
                   <div class="acoes">
-                    <button class="btn" @click="salvarEdicao">Salvar</button>
-                    <button class="btn btn-secundario" @click="cancelarEdicao">
-                      Cancelar
+                    <button
+                      class="btn btn-icone"
+                      :aria-label="`Salvar alterações de ${r.nome}`"
+                      :title="`Salvar alterações de ${r.nome}`"
+                      @click="salvarEdicao"
+                    >
+                      <Icon name="lucide:check" aria-hidden="true" />
+                    </button>
+                    <button
+                      class="btn btn-secundario btn-icone"
+                      :aria-label="`Cancelar edição de ${r.nome}`"
+                      :title="`Cancelar edição de ${r.nome}`"
+                      @click="cancelarEdicao"
+                    >
+                      <Icon name="lucide:x" aria-hidden="true" />
                     </button>
                   </div>
                 </td>
@@ -268,22 +280,35 @@ await Promise.all([carregar(), listarResponsaveis()]);
                 <td data-label="Ações">
                   <div class="acoes">
                     <button
-                      class="btn btn-secundario"
+                      class="btn btn-secundario btn-icone"
+                      :aria-label="`Editar ${r.nome}`"
+                      :title="`Editar ${r.nome}`"
                       @click="iniciarEdicao(r)"
                     >
-                      Editar
+                      <Icon name="lucide:pencil" aria-hidden="true" />
                     </button>
                     <button
-                      class="btn btn-secundario"
+                      class="btn btn-secundario btn-icone"
+                      :aria-label="
+                        r.ativo ? `Desativar ${r.nome}` : `Ativar ${r.nome}`
+                      "
+                      :title="
+                        r.ativo ? `Desativar ${r.nome}` : `Ativar ${r.nome}`
+                      "
                       @click="alternarAtivo(r)"
                     >
-                      {{ r.ativo ? 'Desativar' : 'Ativar' }}
+                      <Icon
+                        :name="r.ativo ? 'lucide:eye-off' : 'lucide:eye'"
+                        aria-hidden="true"
+                      />
                     </button>
                     <button
-                      class="btn btn-perigo"
+                      class="btn btn-perigo btn-icone"
+                      :aria-label="`Excluir ${r.nome}`"
+                      :title="`Excluir ${r.nome}`"
                       @click="excluirResponsavel(r)"
                     >
-                      Excluir
+                      <Icon name="lucide:trash-2" aria-hidden="true" />
                     </button>
                   </div>
                 </td>
@@ -356,15 +381,16 @@ h3 {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.acoes .btn {
-  flex: 1 1 100%;
-}
-
-@media (min-width: 640px) {
-  .acoes .btn {
-    flex: 0 0 auto;
-  }
+.acoes .btn-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0;
+  font-size: 1.1rem;
 }
 </style>
